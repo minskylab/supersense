@@ -41,9 +41,13 @@ func (s *Dummy) Run() error {
 		for {
 			event := <-s.clock.C
 			*s.events <- supersense.Event{
-				ID:        uuid.NewV4().String(),
-				Message:   s.message,
-				EmmitedAt: event,
+				ID:         uuid.NewV4().String(),
+				Message:    s.message,
+				EmmitedAt:  event,
+				SourceID:   s.id,
+				SourceName: s.sourceName,
+				EventKind:  "dummy",
+				ShareURL:   "https://minsky.cc",
 				Person: supersense.Person{
 					Name:        "John Doe",
 					Photo:       "https://pic.jpeg",

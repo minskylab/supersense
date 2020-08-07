@@ -54,21 +54,63 @@ func NewTwitter(props TwitterClientProps) (*Twitter, error) {
 func (s *Twitter) Run() error {
 	demux := twitter.NewSwitchDemux()
 	demux.Tweet = func(tweet *twitter.Tweet) {
-		log.Infof("(TW) %s | %s", tweet.IDStr, tweet.Text)
-		*s.events <- supersense.Event{
-			ID:        tweet.IDStr,
-			EmmitedAt: time.Now(),
-			Message:   tweet.Text,
-			SourceID:  s.id,
-			Title:     fmt.Sprintf("Tweet from %s", tweet.User.Name),
-			Person: supersense.Person{
-				Name:        tweet.User.Name,
-				Email:       &tweet.User.Email,
-				Photo:       tweet.User.ProfileBackgroundImageURL,
-				SourceOwner: s.sourceName,
-			},
+		entities := supersense.Entities{
+			Urls:  []supersense.URLEntity{},
+			Media: []supersense.MediaEntity{},
+			Tags:  []string{},
 		}
-		fmt.Println(tweet.Text)
+		if tweet.ExtendedTweet != nil {
+			if tweet.ExtendedTweet.Entities != nil {
+				for _, url := range tweet.ExtendedTweet.Entities.Urls {
+					entities.Urls = append(entities.Urls, supersense.URLEntity{
+						DisplayURL: url.DisplayURL,
+						URL:        url.URL,
+					})
+				}
+
+				for _, media := range tweet.ExtendedTweet.Entities.Media {
+					entities.Media = append(entities.Media, supersense.MediaEntity{
+						Type: media.Type,
+						URL:  media.MediaURLHttps,
+					})
+				}
+
+				for _, tag := range tweet.ExtendedTweet.Entities.Hashtags {
+					entities.Tags = append(entities.Tags, tag.Text)
+				}
+			}
+		}
+
+		message := tweet.Text
+		if tweet.ExtendedTweet != nil {
+			message = tweet.ExtendedTweet.FullText
+		}
+
+		createdAt, _ := time.Parse(time.RubyDate, tweet.CreatedAt)
+		person := supersense.Person{}
+		if tweet.User != nil {
+			person.Name = tweet.User.Name
+			person.Photo = tweet.User.ProfileImageURLHttps
+			person.SourceOwner = s.sourceName
+			person.Email = &tweet.User.Email
+			person.ProfileURL = &tweet.User.URL
+			person.Username = &tweet.User.ScreenName
+		}
+
+		*s.events <- supersense.Event{
+			ID:         tweet.IDStr,
+			CreatedAt:  createdAt,
+			EmmitedAt:  time.Now(),
+			Message:    message,
+			SourceID:   s.id,
+			SourceName: s.sourceName,
+			EventKind:  "tweet",
+			Title:      fmt.Sprintf("Tweet of %s", tweet.User.Name),
+			Entities:   entities,
+			ShareURL:   tweet.Source,
+			Person:     person,
+		}
+
 	}
 	demux.DM = func(dm *twitter.DirectMessage) {
 		log.Infof("(DM) %s | %s", dm.SenderID, dm.Text)
@@ -84,8 +126,6 @@ func (s *Twitter) Run() error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
-
-	log.Debug("handling twitter stream channel")
 
 	go func() {
 		demux.HandleChan(stream.Messages)

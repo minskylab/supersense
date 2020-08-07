@@ -4,6 +4,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/joho/godotenv"
 	"github.com/minskylab/supersense"
 	"github.com/minskylab/supersense/sources"
@@ -14,10 +15,10 @@ func main() {
 	log.SetLevel(log.DebugLevel)
 	godotenv.Load() // loading .env vars
 
-	dummySource, err := sources.NewDummy(5*time.Second, "Hello World")
-	if err != nil {
-		log.Panic(err)
-	}
+	// dummySource, err := sources.NewDummy(5*time.Second, "Hello World")
+	// if err != nil {
+	// 	log.Panic(err)
+	// }
 
 	twitterSource, err := sources.NewTwitter(sources.TwitterClientProps{
 		ConsumerKey:    os.Getenv("CONSUMER_KEY"),
@@ -30,14 +31,14 @@ func main() {
 		log.Panic(err)
 	}
 
-	mux, err := supersense.NewMux(dummySource, twitterSource)
+	mux, err := supersense.NewMux(twitterSource)
 	if err != nil {
 		log.Panic(err)
 	}
 
 	go func() {
 		for event := range mux.Events() {
-			log.Infof("%s | %s", event.ID, event.Message)
+			log.Infof(spew.Sdump(event))
 		}
 	}()
 

@@ -7,4 +7,5 @@ type Person struct {
 	SourceOwner string
 	Email       *string
 	ProfileURL  *string
+	Username    *string
 }
