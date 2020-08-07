@@ -6,6 +6,8 @@ import "time"
 type Event struct {
 	ID        string
 	Title     string
+	BannerURL string
+	ShareURL  string
 	EmmitedAt time.Time
 	Message   string
 	Person    Person

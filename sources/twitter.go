@@ -34,7 +34,7 @@ type TwitterClientProps struct {
 // NewTwitter returns a new Twitter Source
 func NewTwitter(props TwitterClientProps) (*Twitter, error) {
 	config := oauth1.NewConfig(props.ConsumerKey, props.ConsumerSecret)
-	token := oauth1.NewToken(props.AccessToken, props.AccessToken)
+	token := oauth1.NewToken(props.AccessToken, props.AccessSecret)
 
 	httpClient := config.Client(oauth1.NoContext, token)
 
@@ -54,6 +54,7 @@ func NewTwitter(props TwitterClientProps) (*Twitter, error) {
 func (s *Twitter) Run() error {
 	demux := twitter.NewSwitchDemux()
 	demux.Tweet = func(tweet *twitter.Tweet) {
+		log.Infof("(TW) %s | %s", tweet.IDStr, tweet.Text)
 		*s.events <- supersense.Event{
 			ID:        tweet.IDStr,
 			EmmitedAt: time.Now(),
@@ -73,7 +74,7 @@ func (s *Twitter) Run() error {
 		log.Infof("(DM) %s | %s", dm.SenderID, dm.Text)
 	}
 	demux.Event = func(event *twitter.Event) {
-		log.Infof("(EV) %s | %s", event.Source.ID, event.Event)
+		log.Warnf("(EV) %s | %s", event.Source.ID, event.Event)
 	}
 
 	stream, err := s.client.Streams.Filter(&twitter.StreamFilterParams{
@@ -84,7 +85,11 @@ func (s *Twitter) Run() error {
 		return errors.WithStack(err)
 	}
 
-	go demux.HandleChan(stream.Messages)
+	log.Debug("handling twitter stream channel")
+
+	go func() {
+		demux.HandleChan(stream.Messages)
+	}()
 
 	return nil
 }
