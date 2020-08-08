@@ -45,7 +45,6 @@ func (g *Github) Run(ctx context.Context) error {
 			for _, repo := range g.repos {
 				// repo := "minskylab/supersense"
 				parts := strings.Split(repo, "/")
-
 				events, resp, err := client.Activity.ListRepositoryEvents(ctx, parts[0], parts[1],
 					&github.ListOptions{
 						PerPage: 250,
@@ -72,7 +71,7 @@ func (g *Github) Run(ctx context.Context) error {
 
 				for _, event := range events {
 					if event.CreatedAt != nil {
-						if time.Now().Sub(*event.CreatedAt) > 2*time.Second {
+						if time.Now().Sub(*event.CreatedAt) > 5*time.Second {
 							continue // No old events
 						}
 					}
