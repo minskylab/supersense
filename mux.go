@@ -1,6 +1,10 @@
 package supersense
 
-import "github.com/pkg/errors"
+import (
+	"context"
+
+	"github.com/pkg/errors"
+)
 
 // Mux is a necesary struct to join different sources
 type Mux struct {
@@ -9,12 +13,12 @@ type Mux struct {
 }
 
 // NewMux returns a new mux
-func NewMux(sources ...Source) (*Mux, error) {
+func NewMux(ctx context.Context, sources ...Source) (*Mux, error) {
 	generalChannel := make(chan Event, 1)
 	m := &Mux{channel: generalChannel, sources: sources}
 	for _, s := range m.sources {
 		go func(s Source) {
-			for event := range *s.Events() {
+			for event := range *s.Events(ctx) {
 				m.channel <- event
 			}
 		}(s)
@@ -23,9 +27,9 @@ func NewMux(sources ...Source) (*Mux, error) {
 }
 
 // RunAllSources run all the sources at the same time
-func (m *Mux) RunAllSources() error {
+func (m *Mux) RunAllSources(ctx context.Context) error {
 	for _, s := range m.sources {
-		if err := s.Run(); err != nil {
+		if err := s.Run(ctx); err != nil {
 			return errors.WithStack(err)
 		}
 	}

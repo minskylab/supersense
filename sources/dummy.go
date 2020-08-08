@@ -1,6 +1,7 @@
 package sources
 
 import (
+	"context"
 	"time"
 
 	"github.com/minskylab/supersense"
@@ -32,10 +33,11 @@ func NewDummy(period time.Duration, message string) (*Dummy, error) {
 }
 
 // Run starts the recurrent message issuer
-func (s *Dummy) Run() error {
+func (s *Dummy) Run(ctx context.Context) error {
 	if s.events == nil {
 		return errors.New("invalid Source, it not have an events channel")
 	}
+	username := "jhondoe"
 
 	go func() {
 		for {
@@ -47,11 +49,12 @@ func (s *Dummy) Run() error {
 				SourceID:   s.id,
 				SourceName: s.sourceName,
 				EventKind:  "dummy",
-				ShareURL:   "https://minsky.cc",
+				ShareURL:   "https://example.com",
 				Person: supersense.Person{
-					Name:        "John Doe",
-					Photo:       "https://pic.jpeg",
-					SourceOwner: s.sourceName,
+					Name:     "John Doe",
+					Photo:    "https://pic.jpeg",
+					Owner:    s.sourceName,
+					Username: &username,
 				},
 			}
 		}
@@ -61,6 +64,6 @@ func (s *Dummy) Run() error {
 }
 
 // Events implements the supersense.Source interface
-func (s *Dummy) Events() *chan supersense.Event {
+func (s *Dummy) Events(ctx context.Context) *chan supersense.Event {
 	return s.events
 }

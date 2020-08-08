@@ -1,6 +1,7 @@
 package sources
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -51,7 +52,7 @@ func NewTwitter(props TwitterClientProps) (*Twitter, error) {
 
 // Run bootstrap the necessary actions to demux and listen new tweets
 // and implements the Source interface of supersense
-func (s *Twitter) Run() error {
+func (s *Twitter) Run(ctx context.Context) error {
 	demux := twitter.NewSwitchDemux()
 	demux.Tweet = func(tweet *twitter.Tweet) {
 		entities := supersense.Entities{
@@ -91,7 +92,7 @@ func (s *Twitter) Run() error {
 		if tweet.User != nil {
 			person.Name = tweet.User.Name
 			person.Photo = tweet.User.ProfileImageURLHttps
-			person.SourceOwner = s.sourceName
+			person.Owner = s.sourceName
 			person.Email = &tweet.User.Email
 			person.ProfileURL = &tweet.User.URL
 			person.Username = &tweet.User.ScreenName
@@ -135,6 +136,6 @@ func (s *Twitter) Run() error {
 }
 
 // Events return a channel from where come in the events
-func (s *Twitter) Events() *chan supersense.Event {
+func (s *Twitter) Events(ctx context.Context) *chan supersense.Event {
 	return s.events
 }

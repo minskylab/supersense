@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"os"
 	"time"
 
@@ -15,10 +16,12 @@ func main() {
 	log.SetLevel(log.DebugLevel)
 	godotenv.Load() // loading .env vars
 
-	// dummySource, err := sources.NewDummy(5*time.Second, "Hello World")
-	// if err != nil {
-	// 	log.Panic(err)
-	// }
+	ctx := context.TODO()
+
+	dummySource, err := sources.NewDummy(2*time.Minute, "Hello World")
+	if err != nil {
+		log.Panic(err)
+	}
 
 	twitterSource, err := sources.NewTwitter(sources.TwitterClientProps{
 		ConsumerKey:    os.Getenv("CONSUMER_KEY"),
@@ -31,7 +34,7 @@ func main() {
 		log.Panic(err)
 	}
 
-	mux, err := supersense.NewMux(twitterSource)
+	mux, err := supersense.NewMux(ctx, twitterSource, dummySource)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -42,7 +45,7 @@ func main() {
 		}
 	}()
 
-	mux.RunAllSources()
+	mux.RunAllSources(ctx)
 
-	time.Sleep(1000 * time.Second)
+	time.Sleep(10 * time.Hour)
 }
