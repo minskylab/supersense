@@ -1,0 +1,53 @@
+scalar Time
+
+directive @goModel(model: String, models: [String!]) on OBJECT | INPUT_OBJECT | SCALAR | ENUM | INTERFACE | UNION
+
+directive @goField(forceResolver: Boolean, name: String) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+
+type Query {
+    people: [Person!]!
+}
+
+type MediaEntity @goModel(model: "github.com/minskylab/supersense.MediaEntity") {
+    url: String!
+    type: String!
+}
+
+type URLEntity @goModel(model: "github.com/minskylab/supersense.URLEntity") {
+    url: String!
+    displayURL: String!
+}
+
+type Entities @goModel(model: "github.com/minskylab/supersense.Entities") {
+    tags: [String!]!
+    media: [MediaEntity!]!
+    urls: [URLEntity!]!
+}
+
+type Event @goModel(model: "github.com/minskylab/supersense.Event") {
+    id: String! @goField(name: "ID")
+    createdAt: Time!
+    emmitedAt: Time!
+
+    title: String!
+    message: String!
+    entities: Entities!
+
+    actor: Person!
+
+    shareURL: String!
+
+    sourceID: String!
+    sourceName: String!
+
+    eventKind: String!
+}
+
+type Person @goModel(model: "github.com/minskylab/supersense.Person") {
+    name: String!
+    photo: String!
+    owner: String!
+    email: String
+    profileURL: String
+    username: String
+}

@@ -30,7 +30,7 @@ type Event struct {
 	CreatedAt  time.Time
 	EmmitedAt  time.Time
 	Message    string
-	Person     Person
+	Actor      Person
 	SourceID   string
 	SourceName string
 	EventKind  string

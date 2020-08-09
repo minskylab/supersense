@@ -8,6 +8,7 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/joho/godotenv"
 	"github.com/minskylab/supersense"
+	"github.com/minskylab/supersense/server"
 	"github.com/minskylab/supersense/sources"
 	log "github.com/sirupsen/logrus"
 )
@@ -15,6 +16,8 @@ import (
 func main() {
 	log.SetLevel(log.DebugLevel)
 	godotenv.Load() // loading .env vars
+
+	port := os.Getenv("PORT")
 
 	ctx := context.TODO()
 
@@ -54,5 +57,5 @@ func main() {
 
 	mux.RunAllSources(ctx)
 
-	time.Sleep(10 * time.Hour)
+	server.LaunchServer(port)
 }

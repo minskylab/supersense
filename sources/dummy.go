@@ -50,7 +50,7 @@ func (s *Dummy) Run(ctx context.Context) error {
 				SourceName: s.sourceName,
 				EventKind:  "dummy",
 				ShareURL:   "https://example.com",
-				Person: supersense.Person{
+				Actor: supersense.Person{
 					Name:     "John Doe",
 					Photo:    "https://pic.jpeg",
 					Owner:    s.sourceName,

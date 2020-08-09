@@ -111,15 +111,15 @@ func (g *Github) Run(ctx context.Context) error {
 					superEvent := supersense.Event{}
 					superEvent.ID = event.GetID()
 					superEvent.CreatedAt = event.GetCreatedAt()
-					superEvent.Person = supersense.Person{}
+					superEvent.Actor = supersense.Person{}
 					superEvent.SourceID = g.id
 					superEvent.SourceName = g.name
 
 					// superEvent.ShareURL
 
-					superEvent.Person.Owner = g.name
+					superEvent.Actor.Owner = g.name
 					repoLink := "https://github.com/" + repo
-					superEvent.Person.ProfileURL = &repoLink
+					superEvent.Actor.ProfileURL = &repoLink
 
 					if event == nil {
 						continue
@@ -137,13 +137,13 @@ func (g *Github) Run(ctx context.Context) error {
 
 					if event.GetActor() != nil {
 						// log.Info("[ACTOR] [NAME]", event.GetActor().GetName())
-						superEvent.Person.Name = event.GetActor().GetName()
+						superEvent.Actor.Name = event.GetActor().GetName()
 						// log.Info("[ACTOR] [EMAIL]", event.GetActor().GetEmail())
-						superEvent.Person.Email = event.GetActor().Email
+						superEvent.Actor.Email = event.GetActor().Email
 						// log.Info("[ACTOR] [USERNAME]", event.GetActor().GetLogin())
-						superEvent.Person.Username = event.GetActor().Login
+						superEvent.Actor.Username = event.GetActor().Login
 						// log.Info("[ACTOR] [AVATAR]", event.GetActor().GetAvatarURL())
-						superEvent.Person.Photo = event.GetActor().GetAvatarURL()
+						superEvent.Actor.Photo = event.GetActor().GetAvatarURL()
 					}
 
 					switch payload.(type) {

@@ -109,7 +109,7 @@ func (s *Twitter) Run(ctx context.Context) error {
 			Title:      fmt.Sprintf("Tweet of %s", tweet.User.Name),
 			Entities:   entities,
 			ShareURL:   tweet.Source,
-			Person:     person,
+			Actor:      person,
 		}
 
 	}
