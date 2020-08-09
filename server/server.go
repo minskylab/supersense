@@ -2,9 +2,13 @@ package server
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/gorilla/websocket"
+	"github.com/minskylab/supersense"
 	"github.com/minskylab/supersense/graph"
 	"github.com/minskylab/supersense/graph/generated"
 	log "github.com/sirupsen/logrus"
@@ -13,15 +17,26 @@ import (
 const defaultPort = "8080"
 
 // LaunchServer launchs the graphQL server
-func LaunchServer(port string) {
+func LaunchServer(mux *supersense.Mux, port string) {
 	if port == "" {
 		port = defaultPort
 	}
 
-	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{}}))
+	resolver := graph.NewResolver(mux)
 
-	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	http.Handle("/query", srv)
+	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
+
+	srv.AddTransport(transport.Websocket{
+		KeepAlivePingInterval: 10 * time.Second,
+		Upgrader: websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool {
+				return true
+			},
+		},
+	})
+
+	http.Handle("/", playground.Handler("GraphQL playground", "/graphql"))
+	http.Handle("/graphql", srv)
 
 	log.Infof("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))

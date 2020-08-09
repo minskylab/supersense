@@ -5,7 +5,11 @@ directive @goModel(model: String, models: [String!]) on OBJECT | INPUT_OBJECT | 
 directive @goField(forceResolver: Boolean, name: String) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
 
 type Query {
-    people: [Person!]!
+    event(id: String!): Event!
+}
+
+type Subscription {
+    events: Event
 }
 
 type MediaEntity @goModel(model: "github.com/minskylab/supersense.MediaEntity") {
@@ -25,7 +29,7 @@ type Entities @goModel(model: "github.com/minskylab/supersense.Entities") {
 }
 
 type Event @goModel(model: "github.com/minskylab/supersense.Event") {
-    id: String! @goField(name: "ID")
+    id: String!
     createdAt: Time!
     emmitedAt: Time!
 

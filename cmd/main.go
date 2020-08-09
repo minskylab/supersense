@@ -57,5 +57,5 @@ func main() {
 
 	mux.RunAllSources(ctx)
 
-	server.LaunchServer(port)
+	server.LaunchServer(mux, port)
 }

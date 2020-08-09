@@ -11,11 +11,27 @@ import (
 	"github.com/minskylab/supersense/graph/generated"
 )
 
-func (r *queryResolver) People(ctx context.Context) ([]*supersense.Person, error) {
+func (r *queryResolver) Event(ctx context.Context, id string) (*supersense.Event, error) {
 	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *subscriptionResolver) Events(ctx context.Context) (<-chan *supersense.Event, error) {
+	pipe := make(chan *supersense.Event, 1)
+
+	go func() {
+		for event := range r.mux.Events() {
+			pipe <- &event
+		}
+	}()
+
+	return pipe, nil
 }
 
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
+// Subscription returns generated.SubscriptionResolver implementation.
+func (r *Resolver) Subscription() generated.SubscriptionResolver { return &subscriptionResolver{r} }
+
 type queryResolver struct{ *Resolver }
+type subscriptionResolver struct{ *Resolver }

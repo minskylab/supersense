@@ -23,15 +23,15 @@ type Entities struct {
 
 // Event describes a simple event from a source
 type Event struct {
-	ID         string
-	Title      string
-	Entities   Entities
-	ShareURL   string
-	CreatedAt  time.Time
-	EmmitedAt  time.Time
-	Message    string
-	Actor      Person
-	SourceID   string
-	SourceName string
-	EventKind  string
+	ID         string    `json:"id"`
+	Title      string    `json:"title"`
+	Entities   Entities  `json:"entities"`
+	ShareURL   string    `json:"shareUrl"`
+	CreatedAt  time.Time `json:"createdAt"`
+	EmmitedAt  time.Time `json:"emmitedAt"`
+	Message    string    `json:"message"`
+	Actor      Person    `json:"actor"`
+	SourceID   string    `json:"sourceId"`
+	SourceName string    `json:"sourceName"`
+	EventKind  string    `json:"eventKind"`
 }

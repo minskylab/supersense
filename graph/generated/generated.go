@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"io"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -37,6 +38,7 @@ type Config struct {
 
 type ResolverRoot interface {
 	Query() QueryResolver
+	Subscription() SubscriptionResolver
 }
 
 type DirectiveRoot struct {
@@ -78,7 +80,11 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		People func(childComplexity int) int
+		Event func(childComplexity int, id string) int
+	}
+
+	Subscription struct {
+		Events func(childComplexity int) int
 	}
 
 	URLEntity struct {
@@ -88,7 +94,10 @@ type ComplexityRoot struct {
 }
 
 type QueryResolver interface {
-	People(ctx context.Context) ([]*supersense.Person, error)
+	Event(ctx context.Context, id string) (*supersense.Event, error)
+}
+type SubscriptionResolver interface {
+	Events(ctx context.Context) (<-chan *supersense.Event, error)
 }
 
 type executableSchema struct {
@@ -260,12 +269,24 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Person.Username(childComplexity), true
 
-	case "Query.people":
-		if e.complexity.Query.People == nil {
+	case "Query.event":
+		if e.complexity.Query.Event == nil {
 			break
 		}
 
-		return e.complexity.Query.People(childComplexity), true
+		args, err := ec.field_Query_event_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Event(childComplexity, args["id"].(string)), true
+
+	case "Subscription.events":
+		if e.complexity.Subscription.Events == nil {
+			break
+		}
+
+		return e.complexity.Subscription.Events(childComplexity), true
 
 	case "URLEntity.displayURL":
 		if e.complexity.URLEntity.DisplayURL == nil {
@@ -305,6 +326,23 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 				Data: buf.Bytes(),
 			}
 		}
+	case ast.Subscription:
+		next := ec._Subscription(ctx, rc.Operation.SelectionSet)
+
+		var buf bytes.Buffer
+		return func(ctx context.Context) *graphql.Response {
+			buf.Reset()
+			data := next()
+
+			if data == nil {
+				return nil
+			}
+			data.MarshalGQL(&buf)
+
+			return &graphql.Response{
+				Data: buf.Bytes(),
+			}
+		}
 
 	default:
 		return graphql.OneShot(graphql.ErrorResponse(ctx, "unsupported GraphQL operation"))
@@ -338,7 +376,11 @@ directive @goModel(model: String, models: [String!]) on OBJECT | INPUT_OBJECT | 
 directive @goField(forceResolver: Boolean, name: String) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
 
 type Query {
-    people: [Person!]!
+    event(id: String!): Event!
+}
+
+type Subscription {
+    events: Event
 }
 
 type MediaEntity @goModel(model: "github.com/minskylab/supersense.MediaEntity") {
@@ -358,7 +400,7 @@ type Entities @goModel(model: "github.com/minskylab/supersense.Entities") {
 }
 
 type Event @goModel(model: "github.com/minskylab/supersense.Event") {
-    id: String! @goField(name: "ID")
+    id: String!
     createdAt: Time!
     emmitedAt: Time!
 
@@ -403,6 +445,20 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_event_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -1181,7 +1237,7 @@ func (ec *executionContext) _Person_username(ctx context.Context, field graphql.
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Query_people(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Query_event(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1196,9 +1252,16 @@ func (ec *executionContext) _Query_people(ctx context.Context, field graphql.Col
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_event_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().People(rctx)
+		return ec.resolvers.Query().Event(rctx, args["id"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1210,9 +1273,9 @@ func (ec *executionContext) _Query_people(ctx context.Context, field graphql.Col
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*supersense.Person)
+	res := resTmp.(*supersense.Event)
 	fc.Result = res
-	return ec.marshalNPerson2ᚕᚖgithubᚗcomᚋminskylabᚋsupersenseᚐPersonᚄ(ctx, field.Selections, res)
+	return ec.marshalNEvent2ᚖgithubᚗcomᚋminskylabᚋsupersenseᚐEvent(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1282,6 +1345,47 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 	res := resTmp.(*introspection.Schema)
 	fc.Result = res
 	return ec.marshalO__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Subscription_events(ctx context.Context, field graphql.CollectedField) (ret func() graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = nil
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Subscription",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Subscription().Events(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return nil
+	}
+	if resTmp == nil {
+		return nil
+	}
+	return func() graphql.Marshaler {
+		res, ok := <-resTmp.(<-chan *supersense.Event)
+		if !ok {
+			return nil
+		}
+		return graphql.WriterFunc(func(w io.Writer) {
+			w.Write([]byte{'{'})
+			graphql.MarshalString(field.Alias).MarshalGQL(w)
+			w.Write([]byte{':'})
+			ec.marshalOEvent2ᚖgithubᚗcomᚋminskylabᚋsupersenseᚐEvent(ctx, field.Selections, res).MarshalGQL(w)
+			w.Write([]byte{'}'})
+		})
+	}
 }
 
 func (ec *executionContext) _URLEntity_url(ctx context.Context, field graphql.CollectedField, obj *supersense.URLEntity) (ret graphql.Marshaler) {
@@ -2619,7 +2723,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
-		case "people":
+		case "event":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
 				defer func() {
@@ -2627,7 +2731,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_people(ctx, field)
+				res = ec._Query_event(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -2646,6 +2750,26 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		return graphql.Null
 	}
 	return out
+}
+
+var subscriptionImplementors = []string{"Subscription"}
+
+func (ec *executionContext) _Subscription(ctx context.Context, sel ast.SelectionSet) func() graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, subscriptionImplementors)
+	ctx = graphql.WithFieldContext(ctx, &graphql.FieldContext{
+		Object: "Subscription",
+	})
+	if len(fields) != 1 {
+		ec.Errorf(ctx, "must subscribe to exactly one stream")
+		return nil
+	}
+
+	switch fields[0].Name {
+	case "events":
+		return ec._Subscription_events(ctx, fields[0])
+	default:
+		panic("unknown field " + strconv.Quote(fields[0].Name))
+	}
 }
 
 var uRLEntityImplementors = []string{"URLEntity"}
@@ -2943,6 +3067,20 @@ func (ec *executionContext) marshalNEntities2githubᚗcomᚋminskylabᚋsupersen
 	return ec._Entities(ctx, sel, &v)
 }
 
+func (ec *executionContext) marshalNEvent2githubᚗcomᚋminskylabᚋsupersenseᚐEvent(ctx context.Context, sel ast.SelectionSet, v supersense.Event) graphql.Marshaler {
+	return ec._Event(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNEvent2ᚖgithubᚗcomᚋminskylabᚋsupersenseᚐEvent(ctx context.Context, sel ast.SelectionSet, v *supersense.Event) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Event(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNMediaEntity2githubᚗcomᚋminskylabᚋsupersenseᚐMediaEntity(ctx context.Context, sel ast.SelectionSet, v supersense.MediaEntity) graphql.Marshaler {
 	return ec._MediaEntity(ctx, sel, &v)
 }
@@ -2986,53 +3124,6 @@ func (ec *executionContext) marshalNMediaEntity2ᚕgithubᚗcomᚋminskylabᚋsu
 
 func (ec *executionContext) marshalNPerson2githubᚗcomᚋminskylabᚋsupersenseᚐPerson(ctx context.Context, sel ast.SelectionSet, v supersense.Person) graphql.Marshaler {
 	return ec._Person(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNPerson2ᚕᚖgithubᚗcomᚋminskylabᚋsupersenseᚐPersonᚄ(ctx context.Context, sel ast.SelectionSet, v []*supersense.Person) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNPerson2ᚖgithubᚗcomᚋminskylabᚋsupersenseᚐPerson(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-	return ret
-}
-
-func (ec *executionContext) marshalNPerson2ᚖgithubᚗcomᚋminskylabᚋsupersenseᚐPerson(ctx context.Context, sel ast.SelectionSet, v *supersense.Person) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	return ec._Person(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
@@ -3380,6 +3471,17 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 		return graphql.Null
 	}
 	return ec.marshalOBoolean2bool(ctx, sel, *v)
+}
+
+func (ec *executionContext) marshalOEvent2githubᚗcomᚋminskylabᚋsupersenseᚐEvent(ctx context.Context, sel ast.SelectionSet, v supersense.Event) graphql.Marshaler {
+	return ec._Event(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOEvent2ᚖgithubᚗcomᚋminskylabᚋsupersenseᚐEvent(ctx context.Context, sel ast.SelectionSet, v *supersense.Event) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Event(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {
