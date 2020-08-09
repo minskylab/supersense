@@ -92,11 +92,12 @@ func (g *Github) Run(ctx context.Context) error {
 				}
 
 				for _, event := range events {
-					if event.CreatedAt != nil {
-						if time.Now().Sub(*event.CreatedAt) > 5*time.Second {
-							continue // No old events
-						}
+
+					if time.Now().Sub(event.GetCreatedAt()) > 5*time.Second {
+						continue // No old events
 					}
+
+					log.Info("Github event type: " + event.GetType())
 
 					superEvent := supersense.Event{}
 					superEvent.ID = event.GetID()
