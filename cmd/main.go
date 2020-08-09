@@ -18,7 +18,14 @@ func main() {
 
 	ctx := context.TODO()
 
-	dummySource, err := sources.NewDummy(2*time.Minute, "Hello World")
+	dummySource, err := sources.NewDummy(5*time.Minute, "Hello World")
+	if err != nil {
+		log.Panic(err)
+	}
+
+	authToken := os.Getenv("GITHUB_TOKEN")
+
+	githubSource, err := sources.NewGithub([]string{"minskylab/supersense"}, &authToken)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -34,7 +41,7 @@ func main() {
 		log.Panic(err)
 	}
 
-	mux, err := supersense.NewMux(ctx, twitterSource, dummySource)
+	mux, err := supersense.NewMux(ctx, twitterSource, dummySource, githubSource)
 	if err != nil {
 		log.Panic(err)
 	}
