@@ -21,25 +21,27 @@ import (
 
 // Github is a source for three git repository events: Push, Fork, PullRequest
 type Github struct {
-	id             string
-	name           string
-	channel        chan supersense.Event
-	token          *string
-	repos          []string
-	etags          map[string]string
-	rateRemainings map[string]string
+	id               string
+	name             string
+	channel          chan supersense.Event
+	token            *string
+	repos            []string
+	etags            map[string]string
+	rateRemainings   map[string]string
+	eventsDispatched []string
 }
 
 // NewGithub wraps all the needs for instace a new Github source
 func NewGithub(repos []string, token *string) (*Github, error) {
 	source := &Github{
-		id:             uuid.NewV4().String(),
-		name:           "github",
-		channel:        make(chan supersense.Event, 1),
-		token:          token,
-		repos:          repos,
-		etags:          map[string]string{},
-		rateRemainings: map[string]string{},
+		id:               uuid.NewV4().String(),
+		name:             "github",
+		channel:          make(chan supersense.Event, 1),
+		token:            token,
+		repos:            repos,
+		etags:            map[string]string{},
+		rateRemainings:   map[string]string{},
+		eventsDispatched: []string{},
 	}
 	return source, nil
 }
@@ -93,8 +95,15 @@ func (g *Github) Run(ctx context.Context) error {
 
 				for _, event := range events {
 
-					if time.Now().Sub(event.GetCreatedAt()) > 5*time.Second {
+					if time.Now().Sub(event.GetCreatedAt()) > 6*time.Second {
 						continue // No old events
+					}
+
+					eventID := event.GetID() // If the event has been dispatched
+					for _, e := range g.eventsDispatched {
+						if eventID == e {
+							continue
+						}
 					}
 
 					log.Info("Github event type: " + event.GetType())
@@ -195,8 +204,9 @@ func (g *Github) Run(ctx context.Context) error {
 					default:
 						log.Error(fmt.Sprintf("%T", payload), " payload type not accepted")
 					}
-					superEvent.EmmitedAt = time.Now()
 
+					superEvent.EmmitedAt = time.Now()
+					g.eventsDispatched = append(g.eventsDispatched, eventID)
 					g.channel <- superEvent
 				}
 			}
