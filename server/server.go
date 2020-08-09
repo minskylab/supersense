@@ -24,8 +24,10 @@ func LaunchServer(mux *supersense.Mux, port string) {
 
 	resolver := graph.NewResolver(mux)
 
-	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
+	srv := handler.New(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
 
+	srv.AddTransport(transport.POST{})
+	srv.AddTransport(transport.GET{})
 	srv.AddTransport(transport.Websocket{
 		KeepAlivePingInterval: 10 * time.Second,
 		Upgrader: websocket.Upgrader{
