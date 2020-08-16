@@ -6,28 +6,15 @@ package graph
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/minskylab/supersense"
 	"github.com/minskylab/supersense/graph/generated"
 	"github.com/minskylab/supersense/graph/model"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
-func (r *mutationResolver) Login(ctx context.Context, username string, password string) (*model.AuthResponse, error) {
-	token, err := r.db.LoginWithUserPassword(username, password)
-	if err != nil {
-		return nil, errors.WithMessage(err, "invalid token check more options")
-	}
-	return &model.AuthResponse{
-		JwtToken: token,
-		ExpirateAt: time.Now(),
-	}, nil
-}
-
-func (r *mutationResolver) Broadcast(ctx context.Context, auth string, draft model.EventDraft) (string, error) {
+func (r *mutationResolver) Broadcast(ctx context.Context, draft model.EventDraft) (string, error) {
 	user := ctx.Value("user")
 	logrus.Info(spew.Sdump(user))
 	return "", nil

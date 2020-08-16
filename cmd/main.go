@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -50,30 +49,31 @@ func main() {
 		log.Panic(err)
 	}
 
-	go func() {
-		for event := range mux.Events() {
-			maxLength := 32
-			cutMessage := event.Message
-			if len(event.Message) > maxLength {
-				cutMessage = cutMessage[:maxLength]
-				cutMessage = strings.Replace(cutMessage, "\n", " ", -1)
-				cutMessage = strings.Trim(cutMessage, "\n ")
-			}
-			log.Infof(
-				"[%s] %s: %s | by: %s",
-				event.SourceName,
-				event.Title,
-				cutMessage,
-				event.Actor.Name,
-			)
-		}
-	}()
+	// go func() {
+	// 	for event := range mux.Events() {
+	// 		maxLength := 32
+	// 		cutMessage := event.Message
+	// 		if len(event.Message) > maxLength {
+	// 			cutMessage = cutMessage[:maxLength]
+	// 			cutMessage = strings.Replace(cutMessage, "\n", " ", -1)
+	// 			cutMessage = strings.Trim(cutMessage, "\n ")
+	// 		}
+	// 		log.Infof(
+	// 			"[%s] %s: %s | by: %s @%s",
+	// 			event.SourceName,
+	// 			event.Title,
+	// 			cutMessage,
+	// 			event.Actor.Name,
+	// 			event.Actor.Username,
+	// 		)
+	// 	}
+	// }()
 
 	if err := mux.RunAllSources(ctx); err != nil {
 		log.Panic(err)
 	}
 
-	per, err := persistence.New("./supersense.db", []byte("example"))
+	per, err := persistence.New("./supersense.db")
 	if err != nil {
 		log.Panic(err)
 	}

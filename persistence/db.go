@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/asdine/storm/v3"
-	"github.com/dgrijalva/jwt-go"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 	"github.com/sirupsen/logrus"
@@ -12,44 +11,32 @@ import (
 )
 
 type Persistence struct {
-	secret []byte
 	db *storm.DB
 }
 
-func New(dbPath string, secret []byte) (*Persistence, error) {
+func New(dbPath string) (*Persistence, error) {
 	db, err := storm.Open(dbPath)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-
 	return &Persistence{
-		secret: secret,
 		db: db,
 	}, nil
 }
 
-type user struct {
+// User represents any user that interact with supersense
+type User struct {
 	ID string `storm:"id"`
 	Username string `storm:"unique"`
 	CreatedAt time.Time
 	HashPassword string
 }
 
-type tokenClaims struct {
-	jwt.StandardClaims
-	username string
-}
-
-// GetSecret returns the secret of this database used to create a new user token
-func (db *Persistence) GetSecret() []byte {
-	return db.secret
-}
-
 func (db *Persistence) performRootAdminCreation(password string) error {
-	var userAdmin user
+	var userAdmin User
 	if err := db.db.One("Username", "admin", &userAdmin); err != nil {
 		if err != storm.ErrNotFound {
-			logrus.Warn("root admin user not found")
+			logrus.Warn("root admin User not found")
 			return errors.WithStack(err)
 		}
 	}
@@ -76,37 +63,20 @@ func (db *Persistence) performRootAdminCreation(password string) error {
 	return nil
 }
 
-func (db *Persistence) login(username, password string) (string, error) {
-	var userLogin user
+func (db *Persistence) login(username, password string) (*User, error) {
+	var userLogin User
 	if err := db.db.One("Username", username, &userLogin); err != nil {
-		return "", errors.WithStack(err)
+		return nil, errors.WithStack(err)
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(userLogin.HashPassword), []byte(password)); err != nil {
-		return "", errors.WithMessage(err, "invalid username and/or password")
+		return nil, errors.WithMessage(err, "invalid username and/or password")
 	}
 
-	claims := tokenClaims{
-		username: userLogin.Username,
-		StandardClaims: jwt.StandardClaims{
-			Id: userLogin.ID,
-			IssuedAt: time.Now().Unix(),
-			Subject: "supersense",
-			ExpiresAt: time.Now().Add(1*time.Hour).Unix(),
-		},
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	signedToken, err := token.SignedString(db.secret)
-	if err != nil {
-		return "", errors.WithStack(err)
-	}
-
-	return signedToken, nil
+	return &userLogin, nil
 }
 
 // LoginWithUserPassword perform a simple query to persistence and compare its saved hash
-func (db *Persistence) LoginWithUserPassword(username, password string) (string, error) {
+func (db *Persistence) LoginWithUserPassword(username, password string) (*User, error) {
 	return db.login(username, password)
 }

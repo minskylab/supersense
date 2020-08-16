@@ -90,7 +90,7 @@ func (g *Github) Run(ctx context.Context) error {
 				rateRemaining, _ := strconv.Atoi(rateLimitRemaining)
 
 				if rateRemaining%1200 == 0 {
-					log.Info("Github API Rate Remaining: ", rateLimitRemaining)
+					log.Warn("Github API Rate Remaining: ", rateLimitRemaining)
 				}
 
 				for _, event := range events {
@@ -106,7 +106,7 @@ func (g *Github) Run(ctx context.Context) error {
 						}
 					}
 
-					log.Info("Github event type: " + event.GetType())
+					// log.Info("Github event type: " + event.GetType())
 
 					superEvent := supersense.Event{}
 					superEvent.ID = event.GetID()
@@ -153,7 +153,7 @@ func (g *Github) Run(ctx context.Context) error {
 							// log.Info("[PUSH] [COMMIT] ", commit.GetMessage())
 							superEvent.Message = commit.GetMessage()
 						}
-						superEvent.Title = "Push"
+						superEvent.Title = "Github Push"
 						if pushEvent.GetPusher() != nil {
 							username := pushEvent.GetPusher().GetLogin()
 							superEvent.Title += " of " + username
