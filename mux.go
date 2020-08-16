@@ -6,7 +6,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Mux is a necesary struct to join different sources
+// Mux is a necessary struct to join different sources
 type Mux struct {
 	channel chan Event
 	sources []Source

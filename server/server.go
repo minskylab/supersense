@@ -1,12 +1,16 @@
 package server
 
 import (
+
 	"net/http"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/asdine/storm/v3"
+	jwtmiddleware "github.com/auth0/go-jwt-middleware"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/websocket"
 	"github.com/minskylab/supersense"
 	"github.com/minskylab/supersense/graph"
@@ -16,13 +20,19 @@ import (
 
 const defaultPort = "8080"
 
-// LaunchServer launchs the graphQL server
-func LaunchServer(mux *supersense.Mux, port string) {
+type Server struct {
+	mux *supersense.Mux
+	secret []byte
+	db *storm.DB
+}
+
+// LaunchServer launch the graphQL server
+func (s *Server) LaunchServer(port string) {
 	if port == "" {
 		port = defaultPort
 	}
 
-	resolver := graph.NewResolver(mux)
+	resolver := graph.NewResolver(s.mux)
 
 	srv := handler.New(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
 
@@ -40,6 +50,22 @@ func LaunchServer(mux *supersense.Mux, port string) {
 	http.Handle("/", playground.Handler("GraphQL playground", "/graphql"))
 	http.Handle("/graphql", srv)
 
+	jwtMiddleware := jwtmiddleware.New(jwtmiddleware.Options{
+		ValidationKeyGetter: func(token *jwt.Token) (interface{}, error) {
+			return s.secret, nil
+		},
+		SigningMethod: jwt.SigningMethodHS256,
+	})
+
+	app := jwtMiddleware.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := r.Context().Value("user")
+		log.Info("This is an authenticated request")
+		log.Info("Claim content:\n")
+		for k, v := range user.(*jwt.Token).Claims.(jwt.MapClaims) {
+			log.Info("%s :\t%#v\n", k, v)
+		}
+	}))
+
 	log.Infof("connect to http://localhost:%s/ for GraphQL playground", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	log.Fatal(http.ListenAndServe(":"+port, app))
 }

@@ -15,6 +15,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
 	"github.com/minskylab/supersense"
+	"github.com/minskylab/supersense/graph/model"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -37,6 +38,7 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	Mutation() MutationResolver
 	Query() QueryResolver
 	Subscription() SubscriptionResolver
 }
@@ -45,6 +47,11 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	AuthResponse struct {
+		ExpirateAt func(childComplexity int) int
+		JwtToken   func(childComplexity int) int
+	}
+
 	Entities struct {
 		Media func(childComplexity int) int
 		Tags  func(childComplexity int) int
@@ -70,6 +77,11 @@ type ComplexityRoot struct {
 		URL  func(childComplexity int) int
 	}
 
+	Mutation struct {
+		Broadcast func(childComplexity int, auth string, draft model.EventDraft) int
+		Login     func(childComplexity int, username string, password string) int
+	}
+
 	Person struct {
 		Email      func(childComplexity int) int
 		Name       func(childComplexity int) int
@@ -93,6 +105,10 @@ type ComplexityRoot struct {
 	}
 }
 
+type MutationResolver interface {
+	Login(ctx context.Context, username string, password string) (*model.AuthResponse, error)
+	Broadcast(ctx context.Context, auth string, draft model.EventDraft) (string, error)
+}
 type QueryResolver interface {
 	Event(ctx context.Context, id string) (*supersense.Event, error)
 }
@@ -114,6 +130,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "AuthResponse.expirateAt":
+		if e.complexity.AuthResponse.ExpirateAt == nil {
+			break
+		}
+
+		return e.complexity.AuthResponse.ExpirateAt(childComplexity), true
+
+	case "AuthResponse.jwtToken":
+		if e.complexity.AuthResponse.JwtToken == nil {
+			break
+		}
+
+		return e.complexity.AuthResponse.JwtToken(childComplexity), true
 
 	case "Entities.media":
 		if e.complexity.Entities.Media == nil {
@@ -227,6 +257,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.MediaEntity.URL(childComplexity), true
 
+	case "Mutation.broadcast":
+		if e.complexity.Mutation.Broadcast == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_broadcast_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.Broadcast(childComplexity, args["auth"].(string), args["draft"].(model.EventDraft)), true
+
+	case "Mutation.login":
+		if e.complexity.Mutation.Login == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_login_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.Login(childComplexity, args["username"].(string), args["password"].(string)), true
+
 	case "Person.email":
 		if e.complexity.Person.Email == nil {
 			break
@@ -326,6 +380,20 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 				Data: buf.Bytes(),
 			}
 		}
+	case ast.Mutation:
+		return func(ctx context.Context) *graphql.Response {
+			if !first {
+				return nil
+			}
+			first = false
+			data := ec._Mutation(ctx, rc.Operation.SelectionSet)
+			var buf bytes.Buffer
+			data.MarshalGQL(&buf)
+
+			return &graphql.Response{
+				Data: buf.Bytes(),
+			}
+		}
 	case ast.Subscription:
 		next := ec._Subscription(ctx, rc.Operation.SelectionSet)
 
@@ -370,17 +438,62 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 
 var sources = []*ast.Source{
 	&ast.Source{Name: "graph/schema.graphqls", Input: `scalar Time
-
 directive @goModel(model: String, models: [String!]) on OBJECT | INPUT_OBJECT | SCALAR | ENUM | INTERFACE | UNION
-
 directive @goField(forceResolver: Boolean, name: String) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
 
 type Query {
     event(id: String!): Event!
 }
 
+type Mutation {
+    login(username: String!, password: String!): AuthResponse!
+    broadcast(auth: String!, draft: EventDraft!): String!
+}
+
 type Subscription {
     events: Event
+}
+
+type AuthResponse {
+    jwtToken: String!
+    expirateAt: Time!
+}
+
+input EventDraft {
+    title: String!
+    message: String!
+    actor: PersonDraft!
+    kind: String
+    shareURL: String
+    entities: EntitiesDraft
+}
+
+input PersonDraft {
+    name: String!
+    photo: String!
+    username: String
+}
+
+input MediaEntityDraft {
+    url: String!
+    type: String!
+}
+
+input URLEntityDraft {
+    url: String!
+    displayURL: String!
+}
+
+input EntitiesDraft {
+    tags: [String!]!
+    media: [MediaEntityDraft!]!
+    urls: [URLEntityDraft!]!
+}
+
+type Entities @goModel(model: "github.com/minskylab/supersense.Entities") {
+    tags: [String!]!
+    media: [MediaEntity!]!
+    urls: [URLEntity!]!
 }
 
 type MediaEntity @goModel(model: "github.com/minskylab/supersense.MediaEntity") {
@@ -391,12 +504,6 @@ type MediaEntity @goModel(model: "github.com/minskylab/supersense.MediaEntity") 
 type URLEntity @goModel(model: "github.com/minskylab/supersense.URLEntity") {
     url: String!
     displayURL: String!
-}
-
-type Entities @goModel(model: "github.com/minskylab/supersense.Entities") {
-    tags: [String!]!
-    media: [MediaEntity!]!
-    urls: [URLEntity!]!
 }
 
 type Event @goModel(model: "github.com/minskylab/supersense.Event") {
@@ -433,6 +540,50 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_Mutation_broadcast_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["auth"]; ok {
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["auth"] = arg0
+	var arg1 model.EventDraft
+	if tmp, ok := rawArgs["draft"]; ok {
+		arg1, err = ec.unmarshalNEventDraft2githubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐEventDraft(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["draft"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_login_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["username"]; ok {
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["username"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["password"]; ok {
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["password"] = arg1
+	return args, nil
+}
 
 func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -497,6 +648,74 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _AuthResponse_jwtToken(ctx context.Context, field graphql.CollectedField, obj *model.AuthResponse) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "AuthResponse",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.JwtToken, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _AuthResponse_expirateAt(ctx context.Context, field graphql.CollectedField, obj *model.AuthResponse) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "AuthResponse",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ExpirateAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
 
 func (ec *executionContext) _Entities_tags(ctx context.Context, field graphql.CollectedField, obj *supersense.Entities) (ret graphql.Marshaler) {
 	defer func() {
@@ -1026,6 +1245,88 @@ func (ec *executionContext) _MediaEntity_type(ctx context.Context, field graphql
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Type, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_login(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_login_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().Login(rctx, args["username"].(string), args["password"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.AuthResponse)
+	fc.Result = res
+	return ec.marshalNAuthResponse2ᚖgithubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐAuthResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_broadcast(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_broadcast_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().Broadcast(rctx, args["auth"].(string), args["draft"].(model.EventDraft))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2511,6 +2812,162 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputEntitiesDraft(ctx context.Context, obj interface{}) (model.EntitiesDraft, error) {
+	var it model.EntitiesDraft
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "tags":
+			var err error
+			it.Tags, err = ec.unmarshalNString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "media":
+			var err error
+			it.Media, err = ec.unmarshalNMediaEntityDraft2ᚕᚖgithubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐMediaEntityDraftᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "urls":
+			var err error
+			it.Urls, err = ec.unmarshalNURLEntityDraft2ᚕᚖgithubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐURLEntityDraftᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputEventDraft(ctx context.Context, obj interface{}) (model.EventDraft, error) {
+	var it model.EventDraft
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "title":
+			var err error
+			it.Title, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "message":
+			var err error
+			it.Message, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "actor":
+			var err error
+			it.Actor, err = ec.unmarshalNPersonDraft2ᚖgithubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐPersonDraft(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "kind":
+			var err error
+			it.Kind, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "shareURL":
+			var err error
+			it.ShareURL, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "entities":
+			var err error
+			it.Entities, err = ec.unmarshalOEntitiesDraft2ᚖgithubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐEntitiesDraft(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputMediaEntityDraft(ctx context.Context, obj interface{}) (model.MediaEntityDraft, error) {
+	var it model.MediaEntityDraft
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "url":
+			var err error
+			it.URL, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "type":
+			var err error
+			it.Type, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputPersonDraft(ctx context.Context, obj interface{}) (model.PersonDraft, error) {
+	var it model.PersonDraft
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "name":
+			var err error
+			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "photo":
+			var err error
+			it.Photo, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "username":
+			var err error
+			it.Username, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputURLEntityDraft(ctx context.Context, obj interface{}) (model.URLEntityDraft, error) {
+	var it model.URLEntityDraft
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "url":
+			var err error
+			it.URL, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "displayURL":
+			var err error
+			it.DisplayURL, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -2518,6 +2975,38 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 // endregion ************************** interface.gotpl ***************************
 
 // region    **************************** object.gotpl ****************************
+
+var authResponseImplementors = []string{"AuthResponse"}
+
+func (ec *executionContext) _AuthResponse(ctx context.Context, sel ast.SelectionSet, obj *model.AuthResponse) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, authResponseImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AuthResponse")
+		case "jwtToken":
+			out.Values[i] = ec._AuthResponse_jwtToken(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "expirateAt":
+			out.Values[i] = ec._AuthResponse_expirateAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
 
 var entitiesImplementors = []string{"Entities"}
 
@@ -2651,6 +3140,42 @@ func (ec *executionContext) _MediaEntity(ctx context.Context, sel ast.SelectionS
 			}
 		case "type":
 			out.Values[i] = ec._MediaEntity_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var mutationImplementors = []string{"Mutation"}
+
+func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, mutationImplementors)
+
+	ctx = graphql.WithFieldContext(ctx, &graphql.FieldContext{
+		Object: "Mutation",
+	})
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Mutation")
+		case "login":
+			out.Values[i] = ec._Mutation_login(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "broadcast":
+			out.Values[i] = ec._Mutation_broadcast(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -3049,6 +3574,20 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
+func (ec *executionContext) marshalNAuthResponse2githubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐAuthResponse(ctx context.Context, sel ast.SelectionSet, v model.AuthResponse) graphql.Marshaler {
+	return ec._AuthResponse(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAuthResponse2ᚖgithubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐAuthResponse(ctx context.Context, sel ast.SelectionSet, v *model.AuthResponse) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._AuthResponse(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	return graphql.UnmarshalBoolean(v)
 }
@@ -3079,6 +3618,10 @@ func (ec *executionContext) marshalNEvent2ᚖgithubᚗcomᚋminskylabᚋsupersen
 		return graphql.Null
 	}
 	return ec._Event(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNEventDraft2githubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐEventDraft(ctx context.Context, v interface{}) (model.EventDraft, error) {
+	return ec.unmarshalInputEventDraft(ctx, v)
 }
 
 func (ec *executionContext) marshalNMediaEntity2githubᚗcomᚋminskylabᚋsupersenseᚐMediaEntity(ctx context.Context, sel ast.SelectionSet, v supersense.MediaEntity) graphql.Marshaler {
@@ -3122,8 +3665,52 @@ func (ec *executionContext) marshalNMediaEntity2ᚕgithubᚗcomᚋminskylabᚋsu
 	return ret
 }
 
+func (ec *executionContext) unmarshalNMediaEntityDraft2githubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐMediaEntityDraft(ctx context.Context, v interface{}) (model.MediaEntityDraft, error) {
+	return ec.unmarshalInputMediaEntityDraft(ctx, v)
+}
+
+func (ec *executionContext) unmarshalNMediaEntityDraft2ᚕᚖgithubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐMediaEntityDraftᚄ(ctx context.Context, v interface{}) ([]*model.MediaEntityDraft, error) {
+	var vSlice []interface{}
+	if v != nil {
+		if tmp1, ok := v.([]interface{}); ok {
+			vSlice = tmp1
+		} else {
+			vSlice = []interface{}{v}
+		}
+	}
+	var err error
+	res := make([]*model.MediaEntityDraft, len(vSlice))
+	for i := range vSlice {
+		res[i], err = ec.unmarshalNMediaEntityDraft2ᚖgithubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐMediaEntityDraft(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalNMediaEntityDraft2ᚖgithubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐMediaEntityDraft(ctx context.Context, v interface{}) (*model.MediaEntityDraft, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalNMediaEntityDraft2githubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐMediaEntityDraft(ctx, v)
+	return &res, err
+}
+
 func (ec *executionContext) marshalNPerson2githubᚗcomᚋminskylabᚋsupersenseᚐPerson(ctx context.Context, sel ast.SelectionSet, v supersense.Person) graphql.Marshaler {
 	return ec._Person(ctx, sel, &v)
+}
+
+func (ec *executionContext) unmarshalNPersonDraft2githubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐPersonDraft(ctx context.Context, v interface{}) (model.PersonDraft, error) {
+	return ec.unmarshalInputPersonDraft(ctx, v)
+}
+
+func (ec *executionContext) unmarshalNPersonDraft2ᚖgithubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐPersonDraft(ctx context.Context, v interface{}) (*model.PersonDraft, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalNPersonDraft2githubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐPersonDraft(ctx, v)
+	return &res, err
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
@@ -3222,6 +3809,38 @@ func (ec *executionContext) marshalNURLEntity2ᚕgithubᚗcomᚋminskylabᚋsupe
 	}
 	wg.Wait()
 	return ret
+}
+
+func (ec *executionContext) unmarshalNURLEntityDraft2githubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐURLEntityDraft(ctx context.Context, v interface{}) (model.URLEntityDraft, error) {
+	return ec.unmarshalInputURLEntityDraft(ctx, v)
+}
+
+func (ec *executionContext) unmarshalNURLEntityDraft2ᚕᚖgithubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐURLEntityDraftᚄ(ctx context.Context, v interface{}) ([]*model.URLEntityDraft, error) {
+	var vSlice []interface{}
+	if v != nil {
+		if tmp1, ok := v.([]interface{}); ok {
+			vSlice = tmp1
+		} else {
+			vSlice = []interface{}{v}
+		}
+	}
+	var err error
+	res := make([]*model.URLEntityDraft, len(vSlice))
+	for i := range vSlice {
+		res[i], err = ec.unmarshalNURLEntityDraft2ᚖgithubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐURLEntityDraft(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) unmarshalNURLEntityDraft2ᚖgithubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐURLEntityDraft(ctx context.Context, v interface{}) (*model.URLEntityDraft, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalNURLEntityDraft2githubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐURLEntityDraft(ctx, v)
+	return &res, err
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
@@ -3471,6 +4090,18 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 		return graphql.Null
 	}
 	return ec.marshalOBoolean2bool(ctx, sel, *v)
+}
+
+func (ec *executionContext) unmarshalOEntitiesDraft2githubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐEntitiesDraft(ctx context.Context, v interface{}) (model.EntitiesDraft, error) {
+	return ec.unmarshalInputEntitiesDraft(ctx, v)
+}
+
+func (ec *executionContext) unmarshalOEntitiesDraft2ᚖgithubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐEntitiesDraft(ctx context.Context, v interface{}) (*model.EntitiesDraft, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalOEntitiesDraft2githubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐEntitiesDraft(ctx, v)
+	return &res, err
 }
 
 func (ec *executionContext) marshalOEvent2githubᚗcomᚋminskylabᚋsupersenseᚐEvent(ctx context.Context, sel ast.SelectionSet, v supersense.Event) graphql.Marshaler {
