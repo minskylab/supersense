@@ -15,3 +15,4 @@
 # vendor/
 supersense
 .env
+.idea/

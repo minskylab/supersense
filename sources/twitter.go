@@ -139,3 +139,8 @@ func (s *Twitter) Run(ctx context.Context) error {
 func (s *Twitter) Events(ctx context.Context) *chan supersense.Event {
 	return s.events
 }
+
+// Dispose return a channel from where come in the events
+func (s *Twitter) Dispose(ctx context.Context)  {
+	return
+}

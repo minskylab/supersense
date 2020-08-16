@@ -26,8 +26,8 @@ type Github struct {
 	channel          chan supersense.Event
 	token            *string
 	repos            []string
-	etags            map[string]string
-	rateRemainings   map[string]string
+	eTags            map[string]string
+	rateRemaining    map[string]string
 	eventsDispatched []string
 }
 
@@ -39,8 +39,8 @@ func NewGithub(repos []string, token *string) (*Github, error) {
 		channel:          make(chan supersense.Event, 1),
 		token:            token,
 		repos:            repos,
-		etags:            map[string]string{},
-		rateRemainings:   map[string]string{},
+		eTags:            map[string]string{},
+		rateRemaining:    map[string]string{},
 		eventsDispatched: []string{},
 	}
 	return source, nil
@@ -76,12 +76,12 @@ func (g *Github) Run(ctx context.Context) error {
 				rateLimitRemaining := resp.Header.Get("X-Ratelimit-Remaining")
 				// pollInterval := resp.Header.Get("X-Poll-Interval")
 
-				if g.etags[repo] == "" {
-					g.etags[repo] = etag
+				if g.eTags[repo] == "" {
+					g.eTags[repo] = etag
 				}
 
-				if g.rateRemainings[repo] == "" {
-					g.rateRemainings[repo] = rateLimitRemaining
+				if g.rateRemaining[repo] == "" {
+					g.rateRemaining[repo] = rateLimitRemaining
 				}
 
 				// log.Info("etag: ", etag)
@@ -220,4 +220,9 @@ func (g *Github) Run(ctx context.Context) error {
 // Events returns the events channel
 func (g *Github) Events(ctx context.Context) *chan supersense.Event {
 	return &g.channel
+}
+
+// Dispose close all streams and flows with the source
+func (g *Github) Dispose(ctx context.Context) {
+	return
 }

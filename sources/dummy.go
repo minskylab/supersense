@@ -67,3 +67,8 @@ func (s *Dummy) Run(ctx context.Context) error {
 func (s *Dummy) Events(ctx context.Context) *chan supersense.Event {
 	return s.events
 }
+
+// Dispose close all streams and flows with the source
+func (s *Dummy) Dispose(ctx context.Context) {
+	return
+}

@@ -1,15 +1,60 @@
 scalar Time
-
 directive @goModel(model: String, models: [String!]) on OBJECT | INPUT_OBJECT | SCALAR | ENUM | INTERFACE | UNION
-
 directive @goField(forceResolver: Boolean, name: String) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
 
 type Query {
     event(id: String!): Event!
 }
 
+type Mutation {
+    login(username: String!, password: String!): AuthResponse!
+    broadcast(draft: EventDraft!): String!
+}
+
 type Subscription {
     events: Event
+}
+
+type AuthResponse {
+    jwtToken: String!
+    expirateAt: Time!
+}
+
+input EventDraft {
+    title: String!
+    message: String!
+    actor: PersonDraft!
+    kind: String
+    shareURL: String
+    entities: EntitiesDraft
+}
+
+input PersonDraft {
+    name: String!
+    photo: String!
+    username: String
+}
+
+input MediaEntityDraft {
+    url: String!
+    type: String!
+}
+
+input URLEntityDraft {
+    url: String!
+    displayURL: String!
+}
+
+input EntitiesDraft {
+    tags: [String!]!
+    media: [MediaEntityDraft!]!
+    urls: [URLEntityDraft!]!
+}
+
+type Entities @goModel(model: "github.com/minskylab/supersense.Entities") {
+    tags: [String!]!
+    media: [MediaEntity!]!
+    urls: [URLEntity!]!
 }
 
 type MediaEntity @goModel(model: "github.com/minskylab/supersense.MediaEntity") {
@@ -20,12 +65,6 @@ type MediaEntity @goModel(model: "github.com/minskylab/supersense.MediaEntity") 
 type URLEntity @goModel(model: "github.com/minskylab/supersense.URLEntity") {
     url: String!
     displayURL: String!
-}
-
-type Entities @goModel(model: "github.com/minskylab/supersense.Entities") {
-    tags: [String!]!
-    media: [MediaEntity!]!
-    urls: [URLEntity!]!
 }
 
 type Event @goModel(model: "github.com/minskylab/supersense.Event") {

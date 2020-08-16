@@ -15,7 +15,7 @@ import (
 
 func main() {
 	log.SetLevel(log.DebugLevel)
-	godotenv.Load() // loading .env vars
+	_ = godotenv.Load() // loading .env vars
 
 	port := os.Getenv("PORT")
 
@@ -55,7 +55,9 @@ func main() {
 		}
 	}()
 
-	mux.RunAllSources(ctx)
+	if err := mux.RunAllSources(ctx); err != nil {
+		log.Panic(err)
+	}
 
 	server.LaunchServer(mux, port)
 }
