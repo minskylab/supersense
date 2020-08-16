@@ -16,7 +16,7 @@ import (
 
 const defaultPort = "8080"
 
-// LaunchServer launchs the graphQL server
+// LaunchServer launch the graphQL server
 func LaunchServer(mux *supersense.Mux, port string) {
 	if port == "" {
 		port = defaultPort

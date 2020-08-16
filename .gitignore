@@ -16,3 +16,4 @@
 supersense
 .env
 .idea/
+*.db
