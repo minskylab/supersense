@@ -1,20 +1,19 @@
 package server
 
 import (
-
 	"net/http"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/asdine/storm/v3"
 	jwtmiddleware "github.com/auth0/go-jwt-middleware"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/websocket"
 	"github.com/minskylab/supersense"
 	"github.com/minskylab/supersense/graph"
 	"github.com/minskylab/supersense/graph/generated"
+	"github.com/minskylab/supersense/persistence"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -22,17 +21,16 @@ const defaultPort = "8080"
 
 type Server struct {
 	mux *supersense.Mux
-	secret []byte
-	db *storm.DB
+	db *persistence.Persistence
 }
 
 // LaunchServer launch the graphQL server
-func (s *Server) LaunchServer(port string) {
+func (s *Server) LaunchServer(port string ) {
 	if port == "" {
 		port = defaultPort
 	}
 
-	resolver := graph.NewResolver(s.mux, s)
+	resolver := graph.NewResolver(s.mux, s.db)
 
 	srv := handler.New(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
 
@@ -52,12 +50,13 @@ func (s *Server) LaunchServer(port string) {
 
 	jwtMiddleware := jwtmiddleware.New(jwtmiddleware.Options{
 		ValidationKeyGetter: func(token *jwt.Token) (interface{}, error) {
-			return s.secret, nil
+			return s.db.GetSecret(), nil
 		},
 		SigningMethod: jwt.SigningMethodHS256,
 	})
 
 	app := jwtMiddleware.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Info(r.RequestURI)
 		user := r.Context().Value("user")
 		log.Info("This is an authenticated request")
 		log.Info("Claim content:\n")

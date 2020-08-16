@@ -3,11 +3,12 @@ package main
 import (
 	"context"
 	"os"
+	"strings"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/joho/godotenv"
 	"github.com/minskylab/supersense"
+	"github.com/minskylab/supersense/persistence"
 	"github.com/minskylab/supersense/server"
 	"github.com/minskylab/supersense/sources"
 	log "github.com/sirupsen/logrus"
@@ -51,7 +52,20 @@ func main() {
 
 	go func() {
 		for event := range mux.Events() {
-			log.Infof(spew.Sdump(event))
+			maxLength := 32
+			cutMessage := event.Message
+			if len(event.Message) > maxLength {
+				cutMessage = cutMessage[:maxLength]
+				cutMessage = strings.Replace(cutMessage, "\n", " ", -1)
+				cutMessage = strings.Trim(cutMessage, "\n ")
+			}
+			log.Infof(
+				"[%s] %s: %s | by: %s",
+				event.SourceName,
+				event.Title,
+				cutMessage,
+				event.Actor.Name,
+			)
 		}
 	}()
 
@@ -59,5 +73,15 @@ func main() {
 		log.Panic(err)
 	}
 
-	server.LaunchServer(mux, port)
+	per, err := persistence.New("./supersense.db", []byte("example"))
+	if err != nil {
+		log.Panic(err)
+	}
+
+	instance, err := server.New(mux, per)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	instance.LaunchServer(port)
 }

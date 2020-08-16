@@ -1,4 +1,4 @@
-package server
+package persistence
 
 import (
 	"time"
@@ -10,6 +10,23 @@ import (
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
 )
+
+type Persistence struct {
+	secret []byte
+	db *storm.DB
+}
+
+func New(dbPath string, secret []byte) (*Persistence, error) {
+	db, err := storm.Open(dbPath)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return &Persistence{
+		secret: secret,
+		db: db,
+	}, nil
+}
 
 type user struct {
 	ID string `storm:"id"`
@@ -23,10 +40,14 @@ type tokenClaims struct {
 	username string
 }
 
+// GetSecret returns the secret of this database used to create a new user token
+func (db *Persistence) GetSecret() []byte {
+	return db.secret
+}
 
-func (s *Server) performRootAdminCreation(password string) error {
+func (db *Persistence) performRootAdminCreation(password string) error {
 	var userAdmin user
-	if err := s.db.One("Username", "admin", &userAdmin); err != nil {
+	if err := db.db.One("Username", "admin", &userAdmin); err != nil {
 		if err != storm.ErrNotFound {
 			logrus.Warn("root admin user not found")
 			return errors.WithStack(err)
@@ -47,7 +68,7 @@ func (s *Server) performRootAdminCreation(password string) error {
 		logrus.Warn("username: admin")
 		logrus.Warn("password: " + password)
 
-		if err := s.db.Save(userAdmin); err != nil {
+		if err := db.db.Save(userAdmin); err != nil {
 			return errors.WithStack(err)
 		}
 	}
@@ -55,9 +76,9 @@ func (s *Server) performRootAdminCreation(password string) error {
 	return nil
 }
 
-func (s *Server) login(username, password string) (string, error) {
+func (db *Persistence) login(username, password string) (string, error) {
 	var userLogin user
-	if err := s.db.One("Username", username, &userLogin); err != nil {
+	if err := db.db.One("Username", username, &userLogin); err != nil {
 		return "", errors.WithStack(err)
 	}
 
@@ -77,7 +98,7 @@ func (s *Server) login(username, password string) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	signedToken, err := token.SignedString(s.secret)
+	signedToken, err := token.SignedString(db.secret)
 	if err != nil {
 		return "", errors.WithStack(err)
 	}
@@ -85,7 +106,7 @@ func (s *Server) login(username, password string) (string, error) {
 	return signedToken, nil
 }
 
-// LoginWithUserPassword perform a simple query to db and compare its saved hash
-func (s *Server) LoginWithUserPassword(username, password string) (string, error) {
-	return s.login(username, password)
+// LoginWithUserPassword perform a simple query to persistence and compare its saved hash
+func (db *Persistence) LoginWithUserPassword(username, password string) (string, error) {
+	return db.login(username, password)
 }

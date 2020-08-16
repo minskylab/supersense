@@ -5,10 +5,11 @@ go 1.14
 require (
 	github.com/99designs/gqlgen v0.11.3
 	github.com/asdine/storm/v3 v3.2.1
-	github.com/auth0/go-jwt-middleware v0.0.0-20200810150920-a32d7af194d1 // indirect
+	github.com/auth0/go-jwt-middleware v0.0.0-20200810150920-a32d7af194d1
 	github.com/davecgh/go-spew v1.1.1
 	github.com/dghubble/go-twitter v0.0.0-20200725221434-4bc8ad7ad1b4
 	github.com/dghubble/oauth1 v0.6.0
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gofiber/fiber v1.14.1
 	github.com/gofiber/jwt v0.2.0
 	github.com/google/go-github v17.0.0+incompatible

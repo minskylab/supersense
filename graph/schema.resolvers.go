@@ -17,7 +17,7 @@ import (
 )
 
 func (r *mutationResolver) Login(ctx context.Context, username string, password string) (*model.AuthResponse, error) {
-	token, err := r.server.LoginWithUserPassword(username, password)
+	token, err := r.db.LoginWithUserPassword(username, password)
 	if err != nil {
 		return nil, errors.WithMessage(err, "invalid token check more options")
 	}

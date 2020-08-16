@@ -2,7 +2,7 @@ package graph
 
 import (
 	"github.com/minskylab/supersense"
-	"github.com/minskylab/supersense/server"
+	"github.com/minskylab/supersense/persistence"
 )
 
 //go:generate go run github.com/99designs/gqlgen
@@ -14,10 +14,10 @@ import (
 // Resolver ...
 type Resolver struct {
 	mux *supersense.Mux
-	server *server.Server
+	db *persistence.Persistence
 }
 
 // NewResolver returns a new resolver instance
-func NewResolver(mux *supersense.Mux, srv *server.Server) *Resolver {
-	return &Resolver{mux: mux, server: srv}
+func NewResolver(mux *supersense.Mux, database *persistence.Persistence) *Resolver {
+	return &Resolver{mux: mux, db: database}
 }
