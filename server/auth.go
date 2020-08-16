@@ -84,3 +84,8 @@ func (s *Server) login(username, password string) (string, error) {
 
 	return signedToken, nil
 }
+
+// LoginWithUserPassword perform a simple query to db and compare its saved hash
+func (s *Server) LoginWithUserPassword(username, password string) (string, error) {
+	return s.login(username, password)
+}

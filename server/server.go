@@ -32,7 +32,7 @@ func (s *Server) LaunchServer(port string) {
 		port = defaultPort
 	}
 
-	resolver := graph.NewResolver(s.mux)
+	resolver := graph.NewResolver(s.mux, s)
 
 	srv := handler.New(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
 
