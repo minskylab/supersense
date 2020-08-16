@@ -48,18 +48,18 @@ func (s *Server)  graphqlHandler() gin.HandlerFunc {
 }
 
 // Defining the Playground handler
-func (s *Server) playgroundHandler() gin.HandlerFunc {
-	h := playground.Handler("GraphQL playground", "/graphql")
+func (s *Server) playgroundHandler(endpoint string) gin.HandlerFunc {
+	h := playground.Handler("GraphQL playground", endpoint)
 	return func(c *gin.Context) {
 		h.ServeHTTP(c.Writer, c.Request)
 	}
 }
 
-
 type login struct {
 	Username string `form:"username" json:"username" binding:"required"`
 	Password string `form:"password" json:"password" binding:"required"`
 }
+
 // LaunchServer launch the graphQL server
 func (s *Server) LaunchServer(port string ) {
 	if port == "" {
@@ -85,9 +85,12 @@ func (s *Server) LaunchServer(port string ) {
 		},
 		IdentityHandler: func(c *gin.Context) interface{} {
 			claims := jwt.ExtractClaims(c)
-			return &persistence.User{
-				ID: claims[identityKey].(string),
+			id := claims[identityKey].(string)
+			user, err := s.db.GetUserByID(id)
+			if err != nil {
+				return nil
 			}
+			return user
 		},
 		Authenticator: func(c *gin.Context) (interface{}, error) {
 			var loginPayload login
@@ -101,10 +104,13 @@ func (s *Server) LaunchServer(port string ) {
 			return user, nil
 		},
 		Authorizator: func(data interface{}, c *gin.Context) bool {
-			if v, ok := data.(*persistence.User); ok && v.Username == "admin" {
-				return true
-			}
-			return false
+			// v, ok := data.(*persistence.User)
+			//
+			// if ok && v.Username == "admin" {
+			// 	return true
+			// }
+			// return false
+			return true
 		},
 		Unauthorized: func(c *gin.Context, code int, message string) {
 			c.JSON(code, gin.H{
@@ -121,22 +127,20 @@ func (s *Server) LaunchServer(port string ) {
 	}
 
 	// return s.db.GetSecret(), nil
-	s.router.POST("/graphql", s.graphqlHandler())
-	s.router.GET("/", s.playgroundHandler())
-
+	s.router.GET("/", s.playgroundHandler("/graphql"))
 	s.router.POST("/login", authMiddleware.LoginHandler)
+
 	s.router.NoRoute(authMiddleware.MiddlewareFunc(), func(c *gin.Context) {
 		claims := jwt.ExtractClaims(c)
 		log.Printf("NoRoute claims: %#v\n", claims)
 		c.JSON(404, gin.H{"code": "PAGE_NOT_FOUND", "message": "Page not found"})
 	})
 
-	auth := s.router.Group("/auth")
 	// Refresh time can be longer than token timeout
-	auth.GET("/refresh_token", authMiddleware.RefreshHandler)
-	auth.Use(authMiddleware.MiddlewareFunc())
-	// auth.GET("/hello", )
+	s.router.GET("/refresh_token", authMiddleware.RefreshHandler)
 
+	s.router.Use(authMiddleware.MiddlewareFunc())
+	s.router.POST("/graphql", s.graphqlHandler())
 
 	log.Infof("connect to http://localhost:%s/ for GraphQL playground", port)
 	if err := s.router.Run(); err != nil {

@@ -78,6 +78,10 @@ func main() {
 		log.Panic(err)
 	}
 
+	if err := per.ValidateIfAdminExist(); err != nil {
+		log.Panic(err)
+	}
+
 	instance, err := server.New(mux, per)
 	if err != nil {
 		log.Panic(err)
