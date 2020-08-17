@@ -1,0 +1,22 @@
+subscription EventsStream {
+    events {
+        id
+        createdAt
+        emmitedAt
+        eventKind
+        sourceName
+        title
+        entities {
+            media {
+                url
+                type
+            }
+        }
+        actor {
+            username
+            photo
+            name
+        }
+        message
+    }
+}
