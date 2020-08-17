@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/gorilla/websocket"
@@ -24,11 +25,8 @@ func LaunchServer(mux *supersense.Mux, port string) {
 
 	resolver := graph.NewResolver(mux)
 
-	srv := handler.New(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
-
+	srv := handler.New(generated.NewExecutableSchema(generated.Config{Resolvers: resolver }))
 	srv.AddTransport(transport.POST{})
-	srv.AddTransport(transport.GET{})
-
 	srv.AddTransport(transport.Websocket{
 		KeepAlivePingInterval: 10 * time.Second,
 		Upgrader: websocket.Upgrader{
@@ -37,6 +35,7 @@ func LaunchServer(mux *supersense.Mux, port string) {
 			},
 		},
 	})
+	srv.Use(extension.Introspection{})
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/graphql"))
 	http.Handle("/graphql", srv)

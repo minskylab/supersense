@@ -20,7 +20,7 @@ func main() {
 
 	ctx := context.TODO()
 
-	dummySource, err := sources.NewDummy(5*time.Minute, "Hello World")
+	dummySource, err := sources.NewDummy(10*time.Second, "Hello World")
 	if err != nil {
 		log.Panic(err)
 	}
@@ -37,7 +37,7 @@ func main() {
 		ConsumerSecret: os.Getenv("CONSUMER_SECRET"),
 		AccessToken:    os.Getenv("ACCESS_TOKEN"),
 		AccessSecret:   os.Getenv("ACCESS_SECRET"),
-		QueryToTrack:   []string{"#peru"},
+		QueryToTrack:   []string{"#hacktoberfest"},
 	})
 	if err != nil {
 		log.Panic(err)
