@@ -21,7 +21,7 @@ type Dummy struct {
 
 // NewDummy creates and init a new dummy source
 func NewDummy(period time.Duration, message string) (*Dummy, error) {
-	eventsChan := make(chan supersense.Event, 1)
+	eventsChan := make(chan supersense.Event, 10)
 	source := &Dummy{
 		id:         uuid.NewV4().String(),
 		sourceName: "dummy",

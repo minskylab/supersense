@@ -14,7 +14,7 @@ type Mux struct {
 
 // NewMux returns a new mux
 func NewMux(ctx context.Context, sources ...Source) (*Mux, error) {
-	generalChannel := make(chan Event, 1)
+	generalChannel := make(chan Event, 10)
 	m := &Mux{channel: generalChannel, sources: sources}
 	for _, s := range m.sources {
 		go func(s Source) {

@@ -38,7 +38,7 @@ func main() {
 		ConsumerSecret: os.Getenv("CONSUMER_SECRET"),
 		AccessToken:    os.Getenv("ACCESS_TOKEN"),
 		AccessSecret:   os.Getenv("ACCESS_SECRET"),
-		QueryToTrack:   []string{"#hacktoberfest"},
+		QueryToTrack:   []string{"#covid"},
 	})
 	if err != nil {
 		log.Panic(err)

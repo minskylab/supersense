@@ -9,6 +9,7 @@ import (
 
 	"github.com/minskylab/supersense"
 	"github.com/minskylab/supersense/graph/generated"
+	"github.com/sirupsen/logrus"
 )
 
 func (r *queryResolver) Event(ctx context.Context, id string) (*supersense.Event, error) {
@@ -16,13 +17,17 @@ func (r *queryResolver) Event(ctx context.Context, id string) (*supersense.Event
 }
 
 func (r *subscriptionResolver) Events(ctx context.Context) (<-chan *supersense.Event, error) {
-	pipe := make(chan *supersense.Event, 1)
+	pipe := make(chan *supersense.Event, 10)
 
-	go func() {
-		for event := range r.mux.Events() {
+	go func(eventPipe *chan *supersense.Event) {
+		for {
+			event := <- r.mux.Events()
+			r.mu.Lock()
+			logrus.Warn(event.ID)
 			pipe <- &event
+			r.mu.Unlock()
 		}
-	}()
+	}(&pipe)
 
 	return pipe, nil
 }

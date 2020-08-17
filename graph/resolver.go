@@ -1,6 +1,10 @@
 package graph
 
-import "github.com/minskylab/supersense"
+import (
+	"sync"
+
+	"github.com/minskylab/supersense"
+)
 
 //go:generate go run github.com/99designs/gqlgen
 
@@ -10,10 +14,11 @@ import "github.com/minskylab/supersense"
 
 // Resolver ...
 type Resolver struct {
+	mu    *sync.Mutex
 	mux *supersense.Mux
 }
 
 // NewResolver returns a new resolver instance
 func NewResolver(mux *supersense.Mux) *Resolver {
-	return &Resolver{mux: mux}
+	return &Resolver{mux: mux, mu: &sync.Mutex{}}
 }

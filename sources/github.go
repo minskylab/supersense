@@ -36,7 +36,7 @@ func NewGithub(repos []string, token *string) (*Github, error) {
 	source := &Github{
 		id:               uuid.NewV4().String(),
 		name:             "github",
-		channel:          make(chan supersense.Event, 1),
+		channel:          make(chan supersense.Event, 10),
 		token:            token,
 		repos:            repos,
 		eTags:            map[string]string{},
@@ -45,6 +45,8 @@ func NewGithub(repos []string, token *string) (*Github, error) {
 	}
 	return source, nil
 }
+
+// TODO: Pull Request: better title
 
 // Run perform run initial procedure to spam the gorutine in charge to sniff the github events
 func (g *Github) Run(ctx context.Context) error {
@@ -171,7 +173,7 @@ func (g *Github) Run(ctx context.Context) error {
 								superEvent.Title = "Fork of " + username
 							}
 							// log.Info("[FORK] [FORKEE_NAME] ", forkEvent.GetForkee().GetName())
-							forkeeRepo += forkEvent.GetForkee().GetName()
+							forkeeRepo += "/" + forkEvent.GetForkee().GetName()
 							superEvent.Message = forkeeRepo
 							superEvent.EventKind = "fork"
 						}

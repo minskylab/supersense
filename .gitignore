@@ -17,3 +17,7 @@ supersense
 .env
 .idea/
 *.db
+.build
+build
+web_modules
+node_modules

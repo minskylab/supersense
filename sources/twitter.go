@@ -40,7 +40,7 @@ func NewTwitter(props TwitterClientProps) (*Twitter, error) {
 	httpClient := config.Client(oauth1.NoContext, token)
 
 	client := twitter.NewClient(httpClient)
-	eventsChan := make(chan supersense.Event, 1)
+	eventsChan := make(chan supersense.Event, 10)
 	return &Twitter{
 		id:           uuid.NewV4().String(),
 		sourceName:   "twitter",
@@ -60,6 +60,11 @@ func (s *Twitter) Run(ctx context.Context) error {
 			Media: []supersense.MediaEntity{},
 			Tags:  []string{},
 		}
+
+		if tweet.User != nil {
+			log.Info(tweet.User.ScreenName, tweet.Text)
+		}
+
 		if tweet.ExtendedTweet != nil {
 			if tweet.ExtendedTweet.Entities != nil {
 				for _, url := range tweet.ExtendedTweet.Entities.Urls {
