@@ -42,11 +42,24 @@ func (m *Mux) RunAllSources(ctx context.Context) error {
 	return nil
 }
 
-// Events returns the channel where arrive the all the events from the muxed sources
-func (m *Mux) Events() *chan Event {
+// Pipeline returns the channel where arrive the all the events from the muxed sources
+func (m *Mux) Pipeline() *chan Event {
 	pipe := make(chan Event, 1)
 	m.mu.Lock()
 	m.pipelines = append(m.pipelines, pipe)
 	m.mu.Unlock()
 	return &m.pipelines[len(m.pipelines)-1]
+}
+
+func (m *Mux) Done(pipe *chan Event) {
+	for i, p := range m.pipelines {
+		if &p == pipe {
+			m.mu.Lock()
+			close(p)
+			log.Error(m.pipelines)
+			m.pipelines = append(m.pipelines[:i], m.pipelines[i+1:]...)
+			log.Error(m.pipelines)
+			m.mu.Lock()
+		}
+	}
 }

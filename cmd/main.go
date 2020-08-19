@@ -47,7 +47,7 @@ func main() {
 		log.Panic(err)
 	}
 
-	eventsPipe := mux.Events()
+	eventsPipe := mux.Pipeline()
 
 	go func(eventsPipe *chan supersense.Event) {
 		for event := range *eventsPipe {

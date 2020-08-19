@@ -143,7 +143,7 @@ func (s *Twitter) Run(ctx context.Context) error {
 	return nil
 }
 
-// Events return a channel from where come in the events
+// Pipeline return a channel from where come in the events
 func (s *Twitter) Pipeline(ctx context.Context) <-chan supersense.Event {
 	return s.events
 }

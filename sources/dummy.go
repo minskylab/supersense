@@ -63,7 +63,7 @@ func (s *Dummy) Run(ctx context.Context) error {
 	return nil
 }
 
-// Events implements the supersense.Source interface
+// Pipeline implements the supersense.Source interface
 func (s *Dummy) Pipeline(ctx context.Context) <-chan supersense.Event {
 	return s.events
 }

@@ -219,7 +219,7 @@ func (g *Github) Run(ctx context.Context) error {
 	return nil
 }
 
-// Events returns the events channel
+// Pipeline returns the events channel
 func (g *Github) Pipeline(ctx context.Context) <-chan supersense.Event {
 	return g.channel
 }
