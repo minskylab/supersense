@@ -6,5 +6,5 @@ import "context"
 type Source interface {
 	Run(ctx context.Context) error
 	Dispose(ctx context.Context)
-	Events(ctx context.Context) *chan Event
+	Pipeline(ctx context.Context) <-chan Event
 }

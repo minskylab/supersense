@@ -16,7 +16,7 @@ type Dummy struct {
 	sourceName string
 	clock      *time.Ticker
 	message    string
-	events     *chan supersense.Event
+	events     chan supersense.Event
 }
 
 // NewDummy creates and init a new dummy source
@@ -26,7 +26,7 @@ func NewDummy(period time.Duration, message string) (*Dummy, error) {
 		id:         uuid.NewV4().String(),
 		sourceName: "dummy",
 		clock:      time.NewTicker(period),
-		events:     &eventsChan,
+		events:     eventsChan,
 		message:    message,
 	}
 	return source, nil
@@ -42,7 +42,7 @@ func (s *Dummy) Run(ctx context.Context) error {
 	go func() {
 		for {
 			event := <-s.clock.C
-			*s.events <- supersense.Event{
+			s.events <- supersense.Event{
 				ID:         uuid.NewV4().String(),
 				Message:    s.message,
 				EmittedAt:  event,
@@ -64,7 +64,7 @@ func (s *Dummy) Run(ctx context.Context) error {
 }
 
 // Events implements the supersense.Source interface
-func (s *Dummy) Events(ctx context.Context) *chan supersense.Event {
+func (s *Dummy) Pipeline(ctx context.Context) <-chan supersense.Event {
 	return s.events
 }
 

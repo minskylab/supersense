@@ -16,19 +16,17 @@ func (r *queryResolver) Event(ctx context.Context, id string) (*supersense.Event
 }
 
 func (r *subscriptionResolver) Events(ctx context.Context) (<-chan *supersense.Event, error) {
-	pipe := make(chan *supersense.Event, 10)
-
-	go func(eventPipe *chan *supersense.Event) {
-		for {
-			event := <- r.mux.Events()
-			r.mu.Lock()
-			// logrus.Warn(event.ID)
-			pipe <- &event
-			r.mu.Unlock()
-		}
-	}(&pipe)
-
-	return pipe, nil
+	// pipe := make(chan *supersense.Event, 10)
+	//
+	// go func(eventPipe *chan *supersense.Event) {
+	// 	for {
+	// 		event := <- *r.mux.Pipeline()
+	// 		pipe <- &event
+	// 	}
+	// }(&pipe)
+	//
+	// return pipe, nil
+	return nil, nil
 }
 
 // Query returns generated.QueryResolver implementation.

@@ -2,6 +2,7 @@ package supersense
 
 import (
 	"context"
+	"sync"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -9,21 +10,24 @@ import (
 
 // Mux is a necessary struct to join different sources
 type Mux struct {
-	channel chan Event
+	pipelines []chan Event
 	sources []Source
+	mu *sync.Mutex
 }
 
 // NewMux returns a new mux
 func NewMux(ctx context.Context, sources ...Source) (*Mux, error) {
-	generalChannel := make(chan Event, 10)
-	m := &Mux{channel: generalChannel, sources: sources}
+	channels := make([]chan Event, 0)
+	m := &Mux{pipelines: channels, sources: sources, mu: &sync.Mutex{}}
 	for _, s := range m.sources {
-		go func(s Source) {
-			for event := range *s.Events(ctx) {
+		go func(m *Mux, s Source) {
+			for event := range s.Pipeline(ctx) {
 				log.Warn(event.EmittedAt.Clock())
-				m.channel <- event
+				for _, pipe := range m.pipelines {
+					pipe <- event
+				}
 			}
-		}(s)
+		}(m, s)
 	}
 	return m, nil
 }
@@ -39,6 +43,10 @@ func (m *Mux) RunAllSources(ctx context.Context) error {
 }
 
 // Events returns the channel where arrive the all the events from the muxed sources
-func (m *Mux) Events() chan Event {
-	return m.channel
+func (m *Mux) Events() *chan Event {
+	pipe := make(chan Event, 1)
+	m.mu.Lock()
+	m.pipelines = append(m.pipelines, pipe)
+	m.mu.Unlock()
+	return &m.pipelines[len(m.pipelines)-1]
 }

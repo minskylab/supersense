@@ -20,7 +20,7 @@ type Twitter struct {
 	sourceName   string
 	queryToTrack []string
 	client       *twitter.Client
-	events       *chan supersense.Event
+	events       chan supersense.Event
 }
 
 // TwitterClientProps wraps minimal information for a twitter client creation
@@ -46,7 +46,7 @@ func NewTwitter(props TwitterClientProps) (*Twitter, error) {
 		sourceName:   "twitter",
 		queryToTrack: props.QueryToTrack,
 		client:       client,
-		events:       &eventsChan,
+		events:       eventsChan,
 	}, nil
 }
 
@@ -103,7 +103,7 @@ func (s *Twitter) Run(ctx context.Context) error {
 			person.Username = &tweet.User.ScreenName
 		}
 
-		*s.events <- supersense.Event{
+		s.events <- supersense.Event{
 			ID:         tweet.IDStr,
 			CreatedAt:  createdAt,
 			EmittedAt:  time.Now(),
@@ -144,7 +144,7 @@ func (s *Twitter) Run(ctx context.Context) error {
 }
 
 // Events return a channel from where come in the events
-func (s *Twitter) Events(ctx context.Context) *chan supersense.Event {
+func (s *Twitter) Pipeline(ctx context.Context) <-chan supersense.Event {
 	return s.events
 }
 

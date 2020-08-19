@@ -2,7 +2,6 @@
 Supersense is a simple customizable event board.
 
 
-
 ### Getting Started
 
 Write a config file as a env variables in a .env file like:
@@ -23,5 +22,6 @@ $ PORT=4000 go run cmd/main.go
 Observer:
 ```shell script
 $ cd observer
+$ yarn # in order to download dependencies
 $ yarn start
 ```

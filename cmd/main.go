@@ -58,16 +58,20 @@ func main() {
 			// 	cutMessage = strings.Replace(cutMessage, "\n", " ", -1)
 			// 	cutMessage = strings.Trim(cutMessage, "\n ")
 			// }
+			username := ""
+			if event.Actor.Username != nil {
+				username = *event.Actor.Username
+			}
 			log.Infof(
 				"[%s] %s: %s | by: %s @%s",
 				event.SourceName,
 				event.Title,
 				event.Message,
 				event.Actor.Name,
-				event.Actor.Username,
+				username,
 			)
 		}
-	}(&eventsPipe)
+	}(eventsPipe)
 
 	if err := mux.RunAllSources(ctx); err != nil {
 		log.Panic(err)

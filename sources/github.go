@@ -220,8 +220,8 @@ func (g *Github) Run(ctx context.Context) error {
 }
 
 // Events returns the events channel
-func (g *Github) Events(ctx context.Context) *chan supersense.Event {
-	return &g.channel
+func (g *Github) Pipeline(ctx context.Context) <-chan supersense.Event {
+	return g.channel
 }
 
 // Dispose close all streams and flows with the source
