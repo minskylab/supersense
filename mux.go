@@ -4,9 +4,10 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
-// Mux is a necesary struct to join different sources
+// Mux is a necessary struct to join different sources
 type Mux struct {
 	channel chan Event
 	sources []Source
@@ -19,6 +20,7 @@ func NewMux(ctx context.Context, sources ...Source) (*Mux, error) {
 	for _, s := range m.sources {
 		go func(s Source) {
 			for event := range *s.Events(ctx) {
+				log.Warn(event.EmittedAt.Clock())
 				m.channel <- event
 			}
 		}(s)

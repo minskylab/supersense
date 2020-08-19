@@ -106,7 +106,7 @@ func (s *Twitter) Run(ctx context.Context) error {
 		*s.events <- supersense.Event{
 			ID:         tweet.IDStr,
 			CreatedAt:  createdAt,
-			EmmitedAt:  time.Now(),
+			EmittedAt:  time.Now(),
 			Message:    message,
 			SourceID:   s.id,
 			SourceName: s.sourceName,
@@ -118,9 +118,11 @@ func (s *Twitter) Run(ctx context.Context) error {
 		}
 
 	}
+
 	demux.DM = func(dm *twitter.DirectMessage) {
 		log.Infof("(DM) %s | %s", dm.SenderID, dm.Text)
 	}
+
 	demux.Event = func(event *twitter.Event) {
 		log.Warnf("(EV) %s | %s", event.Source.ID, event.Event)
 	}
@@ -129,6 +131,7 @@ func (s *Twitter) Run(ctx context.Context) error {
 		Track:         s.queryToTrack,
 		StallWarnings: twitter.Bool(true),
 	})
+
 	if err != nil {
 		return errors.WithStack(err)
 	}

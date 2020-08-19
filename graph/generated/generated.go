@@ -685,7 +685,7 @@ func (ec *executionContext) _Event_emmitedAt(ctx context.Context, field graphql.
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.EmmitedAt, nil
+		return obj.EmittedAt, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)

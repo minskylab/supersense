@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -18,56 +17,57 @@ func main() {
 	_ = godotenv.Load() // loading .env vars
 
 	port := os.Getenv("PORT")
+	// authToken := os.Getenv("GITHUB_TOKEN")
 
 	ctx := context.TODO()
 
-	dummySource, err := sources.NewDummy(10*time.Second, "Hello World")
+	dummySource, err := sources.NewDummy(1*time.Second, "Hello World")
 	if err != nil {
 		log.Panic(err)
 	}
 
-	authToken := os.Getenv("GITHUB_TOKEN")
+	// githubSource, err := sources.NewGithub([]string{"minskylab/supersense"}, &authToken)
+	// if err != nil {
+	// 	log.Panic(err)
+	// }
 
-	githubSource, err := sources.NewGithub([]string{"minskylab/supersense"}, &authToken)
+	// twitterSource, err := sources.NewTwitter(sources.TwitterClientProps{
+	// 	ConsumerKey:    os.Getenv("CONSUMER_KEY"),
+	// 	ConsumerSecret: os.Getenv("CONSUMER_SECRET"),
+	// 	AccessToken:    os.Getenv("ACCESS_TOKEN"),
+	// 	AccessSecret:   os.Getenv("ACCESS_SECRET"),
+	// 	QueryToTrack:   []string{"#covid"},
+	// })
+	// if err != nil {
+	// 	log.Panic(err)
+	// }
+
+	mux, err := supersense.NewMux(ctx, dummySource) // githubSource, twitterSource
 	if err != nil {
 		log.Panic(err)
 	}
 
-	twitterSource, err := sources.NewTwitter(sources.TwitterClientProps{
-		ConsumerKey:    os.Getenv("CONSUMER_KEY"),
-		ConsumerSecret: os.Getenv("CONSUMER_SECRET"),
-		AccessToken:    os.Getenv("ACCESS_TOKEN"),
-		AccessSecret:   os.Getenv("ACCESS_SECRET"),
-		QueryToTrack:   []string{"#covid"},
-	})
-	if err != nil {
-		log.Panic(err)
-	}
+	eventsPipe := mux.Events()
 
-	mux, err := supersense.NewMux(ctx, twitterSource, dummySource, githubSource)
-	if err != nil {
-		log.Panic(err)
-	}
-
-	go func() {
-		for event := range mux.Events() {
-			maxLength := 32
-			cutMessage := event.Message
-			if len(event.Message) > maxLength {
-				cutMessage = cutMessage[:maxLength]
-				cutMessage = strings.Replace(cutMessage, "\n", " ", -1)
-				cutMessage = strings.Trim(cutMessage, "\n ")
-			}
+	go func(eventsPipe *chan supersense.Event) {
+		for event := range *eventsPipe {
+			// maxLength := 32
+			// cutMessage := event.Message
+			// if len(event.Message) > maxLength {
+			// 	cutMessage = cutMessage[:maxLength]
+			// 	cutMessage = strings.Replace(cutMessage, "\n", " ", -1)
+			// 	cutMessage = strings.Trim(cutMessage, "\n ")
+			// }
 			log.Infof(
 				"[%s] %s: %s | by: %s @%s",
 				event.SourceName,
 				event.Title,
-				cutMessage,
+				event.Message,
 				event.Actor.Name,
 				event.Actor.Username,
 			)
 		}
-	}()
+	}(&eventsPipe)
 
 	if err := mux.RunAllSources(ctx); err != nil {
 		log.Panic(err)

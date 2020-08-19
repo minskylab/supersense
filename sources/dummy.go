@@ -45,7 +45,7 @@ func (s *Dummy) Run(ctx context.Context) error {
 			*s.events <- supersense.Event{
 				ID:         uuid.NewV4().String(),
 				Message:    s.message,
-				EmmitedAt:  event,
+				EmittedAt:  event,
 				SourceID:   s.id,
 				SourceName: s.sourceName,
 				EventKind:  "dummy",

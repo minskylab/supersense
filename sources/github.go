@@ -207,7 +207,7 @@ func (g *Github) Run(ctx context.Context) error {
 						log.Error(fmt.Sprintf("%T", payload), " payload type not accepted")
 					}
 
-					superEvent.EmmitedAt = time.Now()
+					superEvent.EmittedAt = time.Now()
 					g.eventsDispatched = append(g.eventsDispatched, eventID)
 					g.channel <- superEvent
 				}
