@@ -9,7 +9,6 @@ import (
 
 	"github.com/minskylab/supersense"
 	"github.com/minskylab/supersense/graph/generated"
-	log "github.com/sirupsen/logrus"
 )
 
 func (r *queryResolver) Event(ctx context.Context, id string) (*supersense.Event, error) {
@@ -17,24 +16,8 @@ func (r *queryResolver) Event(ctx context.Context, id string) (*supersense.Event
 }
 
 func (r *subscriptionResolver) Events(ctx context.Context) (<-chan *supersense.Event, error) {
-	pipe := make(chan *supersense.Event, 10)
-
-	go func(eventPipe *chan *supersense.Event) {
-		eventsPipeline := r.mux.Pipeline()
-		log.Warn("INIT", eventsPipeline)
-		go func(done <-chan struct{}) {
-			<- done
-			log.Warn("DONE")
-			r.mux.Done(eventsPipeline)
-		}(ctx.Done())
-		for event := range *eventsPipeline {
-			log.Warn("EVENT: ", event.Message)
-			pipe <- &event
-		}
-		log.Warn("CLOSE")
-		close(pipe)
-	}(&pipe)
-
+	pipe := make(chan *supersense.Event)
+	go r.mux.Register(pipe, ctx.Done())
 	return pipe, nil
 }
 
