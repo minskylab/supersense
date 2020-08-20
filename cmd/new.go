@@ -67,5 +67,5 @@ func launchDefaultService() error {
 		return errors.WithStack(err)
 	}
 
-	return server.LaunchServer(mux, conf.Port)
+	return server.LaunchServer(mux, conf.Port, conf.GraphQLPlayground)
 }

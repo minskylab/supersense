@@ -21,6 +21,8 @@ type Config struct {
 	TwitterAccessToken string `split_words:"true"`
 	TwitterAccessSecret string `split_words:"true"`
 	TwitterQuery []string `split_words:"true"`
+
+	GraphQLPlayground bool `envconfig:"GRAPHQL_PLAYGROUND" default:"false"`
 }
 
 func load(appName string) (*Config, error) {
