@@ -32,7 +32,7 @@ type Github struct {
 }
 
 // NewGithub wraps all the needs for instace a new Github source
-func NewGithub(repos []string, token *string) (*Github, error) {
+func NewGithub(token *string, repos []string) (*Github, error) {
 	source := &Github{
 		id:               uuid.NewV4().String(),
 		name:             "github",

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -15,11 +16,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const defaultPort = "8080"
+const defaultPort = 8080
 
 // LaunchServer launch the graphQL server
-func LaunchServer(mux *supersense.Mux, port string) {
-	if port == "" {
+func LaunchServer(mux *supersense.Mux, port int64) error {
+	if port <= 0 {
 		port = defaultPort
 	}
 
@@ -40,6 +41,7 @@ func LaunchServer(mux *supersense.Mux, port string) {
 	http.Handle("/", playground.Handler("GraphQL playground", "/graphql"))
 	http.Handle("/graphql", srv)
 
-	log.Infof("connect to http://localhost:%s/ for GraphQL playground", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	log.Infof("connect to http://localhost:%d/ for GraphQL playground", port)
+
+	return http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 }
