@@ -14,7 +14,7 @@ interface ObserverBasicLayoutProps {
 const ObserverBasicLayout: React.FC<ObserverBasicLayoutProps> = ({
     initialTitle,
     initialMessage,
-    eventsBuffer=45,
+    eventsBuffer=3*5,
 }: ObserverBasicLayoutProps) => {
     const [events, setEvents] = useState<Event[]>([]);
 

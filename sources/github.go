@@ -9,8 +9,6 @@ import (
 	"strings"
 	"time"
 
-	// "github.com/google/go-github/v32/github"
-
 	"github.com/google/go-github/github"
 	"github.com/minskylab/supersense"
 	"github.com/pkg/errors"
