@@ -9,17 +9,36 @@ import (
 
 	"github.com/minskylab/supersense"
 	"github.com/minskylab/supersense/graph/generated"
+	"github.com/minskylab/supersense/graph/model"
+	"github.com/pkg/errors"
 )
 
-func (r *queryResolver) Event(ctx context.Context, id string) (*supersense.Event, error) {
+func (r *mutationResolver) Login(ctx context.Context, username string, password string) (*model.AuthResponse, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *subscriptionResolver) Events(ctx context.Context) (<-chan *supersense.Event, error) {
+func (r *mutationResolver) Broadcast(ctx context.Context, draft model.EventDraft) (string, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *queryResolver) Event(ctx context.Context, id string) (*supersense.Event, error) {
+	return nil, errors.New("query not implemented yet")
+}
+
+func (r *subscriptionResolver) EventStream(ctx context.Context, filter *model.EventStreamFilter) (<-chan *supersense.Event, error) {
 	pipe := make(chan *supersense.Event)
-	go r.mux.Register(pipe, ctx.Done())
+
+	if filter != nil {
+		go r.mux.Register(pipe, ctx.Done(), filter.Sources...)
+	} else {
+		go r.mux.Register(pipe, ctx.Done())
+	}
+
 	return pipe, nil
 }
+
+// Mutation returns generated.MutationResolver implementation.
+func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
@@ -27,5 +46,6 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 // Subscription returns generated.SubscriptionResolver implementation.
 func (r *Resolver) Subscription() generated.SubscriptionResolver { return &subscriptionResolver{r} }
 
+type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }

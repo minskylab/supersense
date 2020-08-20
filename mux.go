@@ -10,6 +10,7 @@ import (
 // Mux is a necessary struct to join different sources
 type Mux struct {
 	pipelines []chan *Event
+	filters map[chan *Event][]string // sources filter
 	sources []Source
 	mu *sync.Mutex
 }
@@ -17,7 +18,12 @@ type Mux struct {
 // NewMux returns a new mux
 func NewMux(sources ...Source) (*Mux, error) {
 	channels := make([]chan *Event, 0)
-	m := &Mux{pipelines: channels, sources: sources, mu: &sync.Mutex{}}
+	m := &Mux{
+		pipelines: channels,
+		sources: sources,
+		mu: &sync.Mutex{},
+		filters: map[chan *Event][]string{},
+	}
 	return m, nil
 }
 
@@ -27,7 +33,16 @@ func (m *Mux) RunAllSources(ctx context.Context) error {
 		go func(m *Mux, s Source) {
 			for event := range s.Pipeline(ctx) {
 				for _, pipe := range m.pipelines {
-					pipe <- &event
+					filters, filtered := m.filters[pipe]
+					if filtered && len(filters) > 0 {
+						for _, filter := range filters {
+							if filter == event.SourceName {
+								pipe <- &event
+							}
+						}
+					} else {
+						pipe <- &event
+					}
 				}
 			}
 		}(m, s)
@@ -41,9 +56,10 @@ func (m *Mux) RunAllSources(ctx context.Context) error {
 }
 
 // Register attach a new channel to the pipes list.
-func (m *Mux) Register(pipeline chan *Event, done <- chan struct{}) {
+func (m *Mux) Register(pipeline chan *Event, done <- chan struct{}, sources ...string) {
 	m.mu.Lock()
 	m.pipelines = append(m.pipelines, pipeline)
+	if len(sources) > 0 { m.filters[pipeline] = sources }
 	m.mu.Unlock()
 	<- done
 	for i, p := range m.pipelines {

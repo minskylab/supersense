@@ -15,12 +15,21 @@ export type Scalars = {
   Time: any;
 };
 
-export type UrlEntity = {
-  __typename?: 'URLEntity';
-  url: Scalars['String'];
-  displayURL: Scalars['String'];
+
+export type PersonDraft = {
+  name: Scalars['String'];
+  photo: Scalars['String'];
+  username?: Maybe<Scalars['String']>;
 };
 
+export type MediaEntityDraft = {
+  url: Scalars['String'];
+  type: Scalars['String'];
+};
+
+export type EventStreamFilter = {
+  sources: Array<Scalars['String']>;
+};
 
 export type Query = {
   __typename?: 'Query';
@@ -32,10 +41,51 @@ export type QueryEventArgs = {
   id: Scalars['String'];
 };
 
-export type MediaEntity = {
-  __typename?: 'MediaEntity';
-  url: Scalars['String'];
-  type: Scalars['String'];
+export type Subscription = {
+  __typename?: 'Subscription';
+  eventStream: Event;
+};
+
+
+export type SubscriptionEventStreamArgs = {
+  filter?: Maybe<EventStreamFilter>;
+};
+
+export type AuthResponse = {
+  __typename?: 'AuthResponse';
+  jwtToken: Scalars['String'];
+  expirateAt: Scalars['Time'];
+};
+
+export type EventDraft = {
+  title: Scalars['String'];
+  message: Scalars['String'];
+  actor: PersonDraft;
+  kind?: Maybe<Scalars['String']>;
+  shareURL?: Maybe<Scalars['String']>;
+  entities?: Maybe<EntitiesDraft>;
+};
+
+export type Entities = {
+  __typename?: 'Entities';
+  tags: Array<Scalars['String']>;
+  media: Array<MediaEntity>;
+  urls: Array<UrlEntity>;
+};
+
+export type Event = {
+  __typename?: 'Event';
+  id: Scalars['String'];
+  createdAt: Scalars['Time'];
+  emittedAt: Scalars['Time'];
+  title: Scalars['String'];
+  message: Scalars['String'];
+  entities: Entities;
+  actor: Person;
+  shareURL: Scalars['String'];
+  sourceID: Scalars['String'];
+  sourceName: Scalars['String'];
+  eventKind: Scalars['String'];
 };
 
 export type Person = {
@@ -48,31 +98,44 @@ export type Person = {
   username?: Maybe<Scalars['String']>;
 };
 
-export type Subscription = {
-  __typename?: 'Subscription';
-  events?: Maybe<Event>;
+export type Mutation = {
+  __typename?: 'Mutation';
+  login: AuthResponse;
+  broadcast: Scalars['String'];
 };
 
-export type Event = {
-  __typename?: 'Event';
-  id: Scalars['String'];
-  createdAt: Scalars['Time'];
-  emmitedAt: Scalars['Time'];
-  title: Scalars['String'];
-  message: Scalars['String'];
-  entities: Entities;
-  actor: Person;
-  shareURL: Scalars['String'];
-  sourceID: Scalars['String'];
-  sourceName: Scalars['String'];
-  eventKind: Scalars['String'];
+
+export type MutationLoginArgs = {
+  username: Scalars['String'];
+  password: Scalars['String'];
 };
 
-export type Entities = {
-  __typename?: 'Entities';
+
+export type MutationBroadcastArgs = {
+  draft: EventDraft;
+};
+
+export type EntitiesDraft = {
   tags: Array<Scalars['String']>;
-  media: Array<MediaEntity>;
-  urls: Array<UrlEntity>;
+  media: Array<MediaEntityDraft>;
+  urls: Array<UrlEntityDraft>;
+};
+
+export type MediaEntity = {
+  __typename?: 'MediaEntity';
+  url: Scalars['String'];
+  type: Scalars['String'];
+};
+
+export type UrlEntityDraft = {
+  url: Scalars['String'];
+  displayURL: Scalars['String'];
+};
+
+export type UrlEntity = {
+  __typename?: 'URLEntity';
+  url: Scalars['String'];
+  displayURL: Scalars['String'];
 };
 
 export type EventsStreamSubscriptionVariables = Exact<{ [key: string]: never; }>;
@@ -80,9 +143,9 @@ export type EventsStreamSubscriptionVariables = Exact<{ [key: string]: never; }>
 
 export type EventsStreamSubscription = (
   { __typename?: 'Subscription' }
-  & { events?: Maybe<(
+  & { eventStream: (
     { __typename?: 'Event' }
-    & Pick<Event, 'id' | 'createdAt' | 'emmitedAt' | 'eventKind' | 'sourceName' | 'title' | 'message'>
+    & Pick<Event, 'id' | 'createdAt' | 'emittedAt' | 'eventKind' | 'sourceName' | 'title' | 'message'>
     & { entities: (
       { __typename?: 'Entities' }
       & { media: Array<(
@@ -93,16 +156,16 @@ export type EventsStreamSubscription = (
       { __typename?: 'Person' }
       & Pick<Person, 'username' | 'photo' | 'name'>
     ) }
-  )> }
+  ) }
 );
 
 
 export const EventsStreamDocument = gql`
     subscription EventsStream {
-  events {
+  eventStream {
     id
     createdAt
-    emmitedAt
+    emittedAt
     eventKind
     sourceName
     title

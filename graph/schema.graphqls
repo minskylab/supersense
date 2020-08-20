@@ -12,7 +12,11 @@ type Mutation {
 }
 
 type Subscription {
-    events: Event
+    eventStream(filter: EventStreamFilter): Event!
+}
+
+input EventStreamFilter {
+    sources: [String!]!
 }
 
 type AuthResponse {
@@ -70,7 +74,7 @@ type URLEntity @goModel(model: "github.com/minskylab/supersense.URLEntity") {
 type Event @goModel(model: "github.com/minskylab/supersense.Event") {
     id: String!
     createdAt: Time!
-    emmitedAt: Time!
+    emittedAt: Time!
 
     title: String!
     message: String!

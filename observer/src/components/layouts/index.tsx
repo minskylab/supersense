@@ -8,26 +8,26 @@ import EventCard from "../atoms/eventCard";
 interface ObserverBasicLayoutProps {
     initialTitle: string;
     initialMessage: string;
+    eventsBuffer?: number;
 }
 
 const ObserverBasicLayout: React.FC<ObserverBasicLayoutProps> = ({
     initialTitle,
     initialMessage,
+    eventsBuffer=45,
 }: ObserverBasicLayoutProps) => {
     const [events, setEvents] = useState<Event[]>([]);
-
-    // const transitions = useTransition<Event, React.CSSProperties>(events, event=>event.id, {
-    //     from: { transform: 'translate3d(0,-40px,0)' },
-    //     enter: { transform: 'translate3d(0,0px,0)' },
-    //     leave: { transform: 'translate3d(0,-40px,0)' },
-    // });
 
     const sub = useEventsStreamSubscription();
 
     useEffect(() => {
         console.log(sub.data);
-        if (sub.data?.events) {
-            const event = sub.data.events as Event;
+        if (sub.data?.eventStream) {
+
+            const event = sub.data.eventStream as Event;
+            if (events.length + 1 > eventsBuffer) {
+                events.pop()
+            }
             setEvents([event, ...events]);
         }
     }, [sub.data]);
@@ -35,7 +35,7 @@ const ObserverBasicLayout: React.FC<ObserverBasicLayoutProps> = ({
 
     return (
         <Box>
-            <Flex p={3} bg={"secondary"}>
+            <Flex p={3} bg={"primary"}>
                 <Box sx={{ flex: 1 }}>
                     <Text sx={{ fontFamily: "heading" }}>SUPERSENSE</Text>
                 </Box>

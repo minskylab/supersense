@@ -12,14 +12,14 @@ interface EventCardProps {
 
 const EventCard: React.FC<EventCardProps> = ({ event }: EventCardProps) => {
     const [timeAgo, setTimeAgo] = useState<string>(
-        format(event.emmitedAt, "en_US"),
+        format(event.emittedAt, "en_US"),
     );
 
     const props = useSpring({ opacity: 1, from: { opacity: 0 } });
 
     useEffect(() => {
         const timer = setInterval(() => {
-            setTimeAgo(format(event.emmitedAt, "en_US"));
+            setTimeAgo(format(event.emittedAt, "en_US"));
         }, 1000);
 
         return () => {

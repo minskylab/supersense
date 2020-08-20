@@ -1,8 +1,8 @@
 subscription EventsStream {
-    events {
+    eventStream {
         id
         createdAt
-        emmitedAt
+        emittedAt
         eventKind
         sourceName
         title

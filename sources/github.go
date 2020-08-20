@@ -28,10 +28,10 @@ type Github struct {
 	repos            []string
 	eTags            map[string]string
 	rateRemaining    map[string]string
-	eventsDispatched []string
+	eventsDispatched []string // in memory state persistence
 }
 
-// NewGithub wraps all the needs for instace a new Github source
+// NewGithub wraps all the needs for instance a new Github source
 func NewGithub(token *string, repos []string) (*Github, error) {
 	source := &Github{
 		id:               uuid.NewV4().String(),
@@ -101,8 +101,8 @@ func (g *Github) Run(ctx context.Context) error {
 						continue // No old events
 					}
 
-					eventID := event.GetID() // If the event has been dispatched
-					for _, e := range g.eventsDispatched {
+					eventID := event.GetID()
+					for _, e := range g.eventsDispatched { // If the event has been dispatched
 						if eventID == e {
 							continue
 						}
