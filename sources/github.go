@@ -46,7 +46,7 @@ func NewGithub(token *string, repos []string) (*Github, error) {
 
 // TODO: Pull Request: better title
 
-// Run perform run initial procedure to spam the gorutine in charge to sniff the github events
+// Run perform run initial procedure to spam the go-rutine in charge to sniff the github events
 func (g *Github) Run(ctx context.Context) error {
 	var httpClient *http.Client = nil
 
