@@ -22,7 +22,7 @@ func main() {
 
 	ctx := context.TODO()
 
-	dummySource, err := sources.NewDummy(100*time.Second, "Hello World")
+	dummySource, err := sources.NewDummy(10*time.Second, "Hello World")
 	if err != nil {
 		log.Panic(err)
 	}

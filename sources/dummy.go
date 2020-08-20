@@ -54,7 +54,7 @@ func (s *Dummy) Run(ctx context.Context) error {
 				ShareURL:   "https://example.com",
 				Actor: supersense.Person{
 					Name:     "John Doe",
-					Photo:    "https://pic.jpeg",
+					Photo:    "https://api.adorable.io/avatars/72/jhondoe.png",
 					Owner:    s.sourceName,
 					Username: &username,
 				},

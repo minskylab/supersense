@@ -3,6 +3,8 @@ import { Box, Text, Flex, Image } from "theme-ui";
 import type { Event } from "../../../generated/graphql";
 import { GitHub, Twitter, Info, Share } from "react-feather";
 import { format } from "timeago.js";
+import { useSpring, animated } from "react-spring";
+
 
 interface EventCardProps {
     event: Event;
@@ -12,6 +14,8 @@ const EventCard: React.FC<EventCardProps> = ({ event }: EventCardProps) => {
     const [timeAgo, setTimeAgo] = useState<string>(
         format(event.emmitedAt, "en_US"),
     );
+
+    const props = useSpring({ opacity: 1, from: { opacity: 0 } });
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -24,27 +28,25 @@ const EventCard: React.FC<EventCardProps> = ({ event }: EventCardProps) => {
     }, []);
 
     return (
-        <Box
-            key={event.id}
-            p={3}
-            sx={{
-                display: "flex",
-                flexDirection: "column",
-            }}
-            style={{
-                border: "solid 2px rgba(27,27,27,1)",
-                borderRadius: "8px",
-                WebkitBoxShadow: "5px 5px 0px 0px rgba(27,27,27,1)",
-                MozBoxShadow: "5px 5px 0px 0px rgba(27,27,27,1)",
-                boxShadow: "5px 5px 0px 0px rgba(27,27,27,1)",
-            }}
+        <animated.div key={event.id}
+                      style={{
+                          ...props,
+                          display: "flex",
+                          flexDirection: "column",
+                          padding: "1rem",
+                          width: "100%",
+                          border: "solid 2px rgba(27,27,27,1)",
+                          borderRadius: "8px",
+                          WebkitBoxShadow: "5px 5px 0px 0px rgba(27,27,27,1)",
+                          MozBoxShadow: "5px 5px 0px 0px rgba(27,27,27,1)",
+                          boxShadow: "5px 5px 0px 0px rgba(27,27,27,1)",
+                      }}
         >
-            {/* <Box>{event.id}</Box> */}
             <Flex sx={{ alignContent: "center" }}>
                 <Box>
-                    {event.sourceName === "twitter" && <Twitter size={18} />}
-                    {event.sourceName === "github" && <GitHub size={18} />}
-                    {event.sourceName === "dummy" && <Info size={18} />}
+                    {event.sourceName === "twitter" && <Twitter size={18}/>}
+                    {event.sourceName === "github" && <GitHub size={18}/>}
+                    {event.sourceName === "dummy" && <Info size={18}/>}
                 </Box>
                 {/* <Box ml={2}>{event.title}</Box> */}
                 <Box ml={"auto"}>
@@ -85,10 +87,10 @@ const EventCard: React.FC<EventCardProps> = ({ event }: EventCardProps) => {
                         justifyContent: "center",
                     }}
                 >
-                    <Share />
+                    <Share/>
                 </Box>
             </Flex>
-        </Box>
+        </animated.div>
     );
 };
 
