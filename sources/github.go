@@ -103,9 +103,7 @@ func (g *Github) fetchRepo(repo string) {
 	// pollInterval := resp.Header.Get("X-Poll-Interval")
 
 	g.mu.Lock()
-	if g.eTags[repo] == "" {
-		g.eTags[repo] = etag
-	}
+	g.eTags[repo] = etag
 
 	if g.rateRemaining[repo] == "" {
 		g.rateRemaining[repo] = rateLimitRemaining
