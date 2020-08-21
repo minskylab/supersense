@@ -64,7 +64,9 @@ func (g *Github) Run(ctx context.Context) error {
 			for _, repo := range g.repos {
 				// repo := "minskylab/supersense"
 				parts := strings.Split(repo, "/")
-				events, resp, err := client.Activity.ListRepositoryEvents(ctx, parts[0], parts[1],
+				events, resp, err := client.Activity.ListRepositoryEvents(ctx,
+					parts[0],
+					parts[1],
 					&github.ListOptions{
 						PerPage: 250,
 					})

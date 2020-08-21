@@ -34,8 +34,39 @@ func NewStore(path string, maxBuffer int64) (*Store, error) {
 	if maxBuffer <= 0 {
 		maxBuffer = 100e3
 	}
+	s := &Store{db: db, mainID: mainIDValue, maxBuffer: maxBuffer}
 
-	return &Store{db: db, mainID: mainIDValue, maxBuffer: maxBuffer}, nil
+	if err = s.initialCheck(); err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return s, nil
+}
+
+func (s *Store) initialCheck() error {
+	state := new(SnapshotSharedState)
+	err := s.db.One("ID", s.mainID, state)
+	if err != nil && err != storm.ErrNotFound {
+		return errors.WithStack(err)
+	}
+
+	if err == storm.ErrNotFound {
+		defaultSnapshot := SnapshotSharedState{
+			ID: s.mainID,
+			CreatedAt: time.Now(),
+			UpdateAt: time.Now(),
+			SharedState: persistence.SharedState{
+				Board:      []*supersense.Event{},
+				LastUpdate: time.Now(),
+			},
+		}
+
+		if err = s.db.Save(&defaultSnapshot); err != nil {
+			return errors.WithStack(err)
+		}
+	}
+
+	return nil
 }
 
 func (s *Store) CurrentSharedState() (*persistence.SharedState, error) {
@@ -47,7 +78,7 @@ func (s *Store) CurrentSharedState() (*persistence.SharedState, error) {
 	return &state.SharedState, nil
 }
 
-func (s *Store) AddEventToSharedState(event supersense.Event) (*persistence.SharedState, error) {
+func (s *Store) AddEventToSharedState(event *supersense.Event) (*persistence.SharedState, error) {
 	state := new(SnapshotSharedState)
 	if err := s.db.One("ID", s.mainID, state); err != nil {
 		return nil, errors.WithStack(err)

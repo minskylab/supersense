@@ -9,20 +9,21 @@ import (
 
 // Mux is a necessary struct to join different sources
 type Mux struct {
-	pipelines []chan *Event // fan-out pipelines
+	pipelines []chan *Event            // fan-out pipelines
 	filters   map[chan *Event][]string // sources filter
 	sources   []Source
 	running   map[Source]bool
 	mu        *sync.Mutex
 }
 
-// NewMux returns a new mux
+// NewMux returns a new mux to use as a mani pipeline for all your event sources
 func NewMux(sources ...Source) (*Mux, error) {
 	channels := make([]chan *Event, 0)
 	m := &Mux{
-		pipelines: channels,
-		sources:   sources,
 		mu:        &sync.Mutex{},
+		sources:   sources,
+		pipelines: channels,
+		running:   map[Source]bool{},
 		filters:   map[chan *Event][]string{},
 	}
 	return m, nil
@@ -74,21 +75,30 @@ func (m *Mux) RunAllSources(ctx context.Context) error {
 	return nil
 }
 
-// Register attach a new channel to the pipes list.
-func (m *Mux) Register(pipeline chan *Event, done <-chan struct{}, sources ...string) {
+func (m *Mux) addPipeline(pipeline chan *Event, filteredSources ...string) {
 	m.mu.Lock()
 	m.pipelines = append(m.pipelines, pipeline)
-	if len(sources) > 0 {
-		m.filters[pipeline] = sources
+	if len(filteredSources) > 0 {
+		m.filters[pipeline] = filteredSources
 	}
 	m.mu.Unlock()
-	<-done
+}
+
+func (m *Mux) deleteAndClosePipeline(pipeline chan *Event) {
 	for i, p := range m.pipelines {
 		if p == pipeline {
 			m.mu.Lock()
 			close(p)
 			m.pipelines = append(m.pipelines[:i], m.pipelines[i+1:]...)
+			delete(m.filters, pipeline)
 			m.mu.Unlock()
 		}
 	}
+}
+
+// Register attach a new channel to the pipes list.
+func (m *Mux) Register(pipeline chan *Event, done <-chan struct{}, filteredSources ...string) {
+	m.addPipeline(pipeline, filteredSources...)
+	<-done
+	m.deleteAndClosePipeline(pipeline)
 }

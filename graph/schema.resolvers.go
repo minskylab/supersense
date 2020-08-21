@@ -10,7 +10,6 @@ import (
 	"github.com/minskylab/supersense"
 	"github.com/minskylab/supersense/graph/generated"
 	"github.com/minskylab/supersense/graph/model"
-	"github.com/pkg/errors"
 )
 
 func (r *mutationResolver) Login(ctx context.Context, username string, password string) (*model.AuthResponse, error) {
@@ -21,8 +20,8 @@ func (r *mutationResolver) Broadcast(ctx context.Context, draft model.EventDraft
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) Event(ctx context.Context, id string) (*supersense.Event, error) {
-	return nil, errors.New("query not implemented yet")
+func (r *queryResolver) SharedBoard(ctx context.Context, buffer int) ([]*supersense.Event, error) {
+	panic(fmt.Errorf("not implemented"))
 }
 
 func (r *subscriptionResolver) EventStream(ctx context.Context, filter *model.EventStreamFilter) (<-chan *supersense.Event, error) {

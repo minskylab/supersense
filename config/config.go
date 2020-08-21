@@ -13,8 +13,8 @@ type Config struct {
 	GithubToken string   `split_words:"true"`
 	GithubRepos []string `split_words:"true"`
 
-	DummyPeriod  string `default:"1h" split_words:"true"`
-	DummyMessage string `default:"liveliness probe" split_words:"true"`
+	DummyPeriod  string `split_words:"true"`
+	DummyMessage string `split_words:"true"`
 
 	TwitterConsumerKey    string   `split_words:"true"`
 	TwitterConsumerSecret string   `split_words:"true"`
@@ -23,6 +23,11 @@ type Config struct {
 	TwitterQuery          []string `split_words:"true"`
 
 	GraphQLPlayground bool `envconfig:"GRAPHQL_PLAYGROUND" default:"false"`
+
+	Persistence bool `split_words:"true" default:"false"`
+	PersistenceBoltDBFilePath string `envconfig:"PERSISTENCE_BOLTDB_FILEPATH" default:"ss.db"`
+	PersistenceRedisAddress string `split_words:"true"`
+	PersistenceRedisPassword string `split_words:"true"`
 }
 
 func load(appName string) (*Config, error) {

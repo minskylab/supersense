@@ -14,6 +14,6 @@ type SharedConfig struct {
 
 // SharedState refers to an event board shared for all of your observers (consumers)
 type SharedState struct {
-	Board      []supersense.Event `json:"board"`
+	Board      []*supersense.Event `json:"board"`
 	LastUpdate time.Time          `json:"last_update"`
 }

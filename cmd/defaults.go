@@ -7,22 +7,29 @@ import (
 	"github.com/minskylab/supersense/config"
 	"github.com/minskylab/supersense/sources"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 func defaultSources(conf *config.Config) ([]supersense.Source, error) {
 	defaultSources := make([]supersense.Source, 0)
 
-	dur, err := time.ParseDuration(conf.DummyPeriod)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
+	if conf.DummyPeriod != "" && conf.DummyMessage != "" {
+		dur, err := time.ParseDuration(conf.DummyPeriod)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
 
-	dummy, err := sources.NewDummy(dur, conf.DummyMessage)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
+		dummy, err := sources.NewDummy(dur, conf.DummyMessage)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
 
-	defaultSources = append(defaultSources, dummy)
+		defaultSources = append(defaultSources, dummy)
+		log.WithFields(log.Fields{
+			"period":  dur,
+			"message": conf.DummyMessage,
+		}).Info("Dummy source activated")
+	}
 
 	if len(conf.GithubRepos) != 0 {
 		var token *string = nil
@@ -36,6 +43,10 @@ func defaultSources(conf *config.Config) ([]supersense.Source, error) {
 		}
 
 		defaultSources = append(defaultSources, github)
+		log.WithFields(log.Fields{
+			"repos":     conf.GithubRepos,
+			"withToken": token != nil,
+		}).Info("Github source activated")
 	}
 
 	if conf.TwitterAccessSecret != "" && conf.TwitterAccessToken != "" &&
@@ -54,6 +65,9 @@ func defaultSources(conf *config.Config) ([]supersense.Source, error) {
 		}
 
 		defaultSources = append(defaultSources, twitter)
+		log.WithFields(log.Fields{
+			"query": conf.TwitterQuery,
+		}).Info("Twitter source activated")
 	}
 
 	return defaultSources, nil
