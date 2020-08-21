@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/minskylab/supersense"
@@ -30,6 +31,7 @@ type Github struct {
 	eventsDispatched []string // in memory state persistence
 	httpClient       *http.Client
 	baseURL          string
+	mu *sync.Mutex
 }
 
 // NewGithub wraps all the needs for instance a new Github source
@@ -47,6 +49,7 @@ func NewGithub(token *string, repos []string) (*Github, error) {
 		httpClient: &http.Client{
 			Timeout:       60*time.Second,
 		},
+		mu: &sync.Mutex{},
 	}
 	return source, nil
 }
@@ -109,6 +112,7 @@ func (g *Github) Run(ctx context.Context) error {
 				rateLimitRemaining := resp.Header.Get("X-Ratelimit-Remaining")
 				// pollInterval := resp.Header.Get("X-Poll-Interval")
 
+				g.mu.Lock()
 				if g.eTags[repo] == "" {
 					g.eTags[repo] = etag
 				}
@@ -116,7 +120,7 @@ func (g *Github) Run(ctx context.Context) error {
 				if g.rateRemaining[repo] == "" {
 					g.rateRemaining[repo] = rateLimitRemaining
 				}
-
+				g.mu.Unlock()
 				// rateRemaining, _ := strconv.Atoi(rateLimitRemaining)
 
 				// if rateRemaining%1200 == 0 {
@@ -247,7 +251,9 @@ func (g *Github) Run(ctx context.Context) error {
 					}
 
 					superEvent.EmittedAt = time.Now()
+					g.mu.Lock()
 					g.eventsDispatched = append(g.eventsDispatched, *event.ID)
+					g.mu.Unlock()
 					g.channel <- superEvent
 				}
 			}
