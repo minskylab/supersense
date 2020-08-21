@@ -65,6 +65,8 @@ func (g *Github) pullEvents(owner, repo string, previousETag string, token *stri
 	req.Header.Set("User-Agent", "go-github")
 	req.Header.Set("If-None-Match", previousETag)
 
+	log.Info("If-None-Match: ", previousETag)
+
 	if token != nil {
 		req.Header.Set("Authorization", "token " + *token)
 	}
