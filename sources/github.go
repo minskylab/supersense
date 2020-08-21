@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -67,8 +68,6 @@ func (g *Github) pullEvents(owner, repo string, previousETag string, token *stri
 	req.Header.Set("User-Agent", "go-github")
 	req.Header.Set("If-None-Match", previousETag)
 
-	log.Info("If-None-Match: ", previousETag)
-
 	if token != nil {
 		req.Header.Set("Authorization", "token " + *token)
 	}
@@ -109,11 +108,11 @@ func (g *Github) fetchRepo(repo string) {
 		g.rateRemaining[repo] = rateLimitRemaining
 	}
 
-	// rateRemaining, _ := strconv.Atoi(rateLimitRemaining)
+	rateRemaining, _ := strconv.Atoi(rateLimitRemaining)
 
-	// if rateRemaining%1200 == 0 {
-	log.WithFields(log.Fields{"repo": repo, "etag": g.eTags[repo]}).Warn("Github API Rate Remaining: ", rateLimitRemaining)
-	// }
+	if rateRemaining%1200 == 0 {
+		log.WithFields(log.Fields{"repo": repo, "etag": g.eTags[repo]}).Warn("Github API Rate Remaining: ", rateLimitRemaining)
+	}
 
 	g.mu.Unlock()
 
