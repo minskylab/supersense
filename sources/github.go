@@ -102,6 +102,8 @@ func (g *Github) Run(ctx context.Context) error {
 				}
 
 				etag := resp.Header.Get("ETag")
+				etag = strings.TrimPrefix(etag, "W/")
+
 				rateLimitRemaining := resp.Header.Get("X-Ratelimit-Remaining")
 				// pollInterval := resp.Header.Get("X-Poll-Interval")
 
