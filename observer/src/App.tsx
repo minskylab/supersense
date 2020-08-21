@@ -1,6 +1,6 @@
 import React from "react";
 import { BrowserRouter as Router, Route } from "react-router-dom";
-import { ObserverPage } from "./components/pages";
+import { ObserverPage } from "@app/components/pages";
 
 import { ThemeProvider } from "theme-ui";
 import theme from "./theme";

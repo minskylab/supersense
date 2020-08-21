@@ -1,4 +1,6 @@
 {
   "extends": "@snowpack/app-scripts-react",
-  "plugins": []
+  "alias": {
+    "@app": "./src/"
+  }
 }

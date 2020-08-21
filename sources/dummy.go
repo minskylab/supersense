@@ -44,8 +44,8 @@ func (s *Dummy) Run(ctx context.Context) error {
 			event := <-s.clock.C
 			s.events <- supersense.Event{
 				ID:         uuid.NewV4().String(),
-				CreatedAt: time.Now(),
-				Title: "Hello Supersense",
+				CreatedAt:  time.Now(),
+				Title:      "Hello Supersense",
 				Message:    s.message,
 				EmittedAt:  event,
 				SourceID:   s.id,

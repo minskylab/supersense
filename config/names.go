@@ -1,6 +1,5 @@
 package config
 
-
 // const Port = "PORT"
 //
 // const GithubToken = "GITHUB_TOKEN"

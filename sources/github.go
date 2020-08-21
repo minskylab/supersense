@@ -90,7 +90,7 @@ func (g *Github) Run(ctx context.Context) error {
 				rateRemaining, _ := strconv.Atoi(rateLimitRemaining)
 
 				if rateRemaining%1200 == 0 {
-					log.Info("Github API Rate Remaining: ", rateLimitRemaining)
+					log.Warn("Github API Rate Remaining: ", rateLimitRemaining)
 				}
 
 				for _, event := range events {

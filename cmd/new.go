@@ -12,7 +12,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-
 func launchDefaultService() error {
 	_ = godotenv.Load() // loading .env vars
 

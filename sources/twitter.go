@@ -61,10 +61,6 @@ func (s *Twitter) Run(ctx context.Context) error {
 			Tags:  []string{},
 		}
 
-		if tweet.User != nil {
-			log.Info(tweet.User.ScreenName, tweet.Text)
-		}
-
 		if tweet.ExtendedTweet != nil {
 			if tweet.ExtendedTweet.Entities != nil {
 				for _, url := range tweet.ExtendedTweet.Entities.Urls {
@@ -149,6 +145,6 @@ func (s *Twitter) Pipeline(ctx context.Context) <-chan supersense.Event {
 }
 
 // Dispose return a channel from where come in the events
-func (s *Twitter) Dispose(ctx context.Context)  {
+func (s *Twitter) Dispose(ctx context.Context) {
 	return
 }

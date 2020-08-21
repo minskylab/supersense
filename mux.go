@@ -9,10 +9,11 @@ import (
 
 // Mux is a necessary struct to join different sources
 type Mux struct {
-	pipelines []chan *Event
-	filters map[chan *Event][]string // sources filter
-	sources []Source
-	mu *sync.Mutex
+	pipelines []chan *Event // fan-out pipelines
+	filters   map[chan *Event][]string // sources filter
+	sources   []Source
+	running   map[Source]bool
+	mu        *sync.Mutex
 }
 
 // NewMux returns a new mux
@@ -20,33 +21,51 @@ func NewMux(sources ...Source) (*Mux, error) {
 	channels := make([]chan *Event, 0)
 	m := &Mux{
 		pipelines: channels,
-		sources: sources,
-		mu: &sync.Mutex{},
-		filters: map[chan *Event][]string{},
+		sources:   sources,
+		mu:        &sync.Mutex{},
+		filters:   map[chan *Event][]string{},
 	}
 	return m, nil
+}
+
+func (m *Mux) setRunningSource(s Source, isRunning bool) {
+	m.mu.Lock()
+	m.running[s] = isRunning
+	m.mu.Unlock()
+}
+
+func (m *Mux) sourceListener(ctx context.Context, s Source) {
+	m.setRunningSource(s, true)
+	for event := range s.Pipeline(ctx) {
+		m.mu.Lock()
+		for _, pipe := range m.pipelines {
+			filters, filtered := m.filters[pipe]
+			if filtered && len(filters) > 0 {
+				for _, filter := range filters {
+					if filter == event.SourceName {
+						pipe <- &event
+					}
+				}
+			} else {
+				pipe <- &event
+			}
+		}
+		m.mu.Unlock()
+	}
+	m.setRunningSource(s, false)
+}
+
+func (m *Mux) addNewSource(ctx context.Context, s Source) {
+	m.sources = append(m.sources, s)
+	go m.sourceListener(ctx, s)
 }
 
 // RunAllSources run all the sources at the same time
 func (m *Mux) RunAllSources(ctx context.Context) error {
 	for _, s := range m.sources {
-		go func(m *Mux, s Source) {
-			for event := range s.Pipeline(ctx) {
-				for _, pipe := range m.pipelines {
-					filters, filtered := m.filters[pipe]
-					if filtered && len(filters) > 0 {
-						for _, filter := range filters {
-							if filter == event.SourceName {
-								pipe <- &event
-							}
-						}
-					} else {
-						pipe <- &event
-					}
-				}
-			}
-		}(m, s)
+		go m.sourceListener(ctx, s)
 	}
+
 	for _, s := range m.sources {
 		if err := s.Run(ctx); err != nil {
 			return errors.WithStack(err)
@@ -56,12 +75,14 @@ func (m *Mux) RunAllSources(ctx context.Context) error {
 }
 
 // Register attach a new channel to the pipes list.
-func (m *Mux) Register(pipeline chan *Event, done <- chan struct{}, sources ...string) {
+func (m *Mux) Register(pipeline chan *Event, done <-chan struct{}, sources ...string) {
 	m.mu.Lock()
 	m.pipelines = append(m.pipelines, pipeline)
-	if len(sources) > 0 { m.filters[pipeline] = sources }
+	if len(sources) > 0 {
+		m.filters[pipeline] = sources
+	}
 	m.mu.Unlock()
-	<- done
+	<-done
 	for i, p := range m.pipelines {
 		if p == pipeline {
 			m.mu.Lock()

@@ -12,7 +12,7 @@ import (
 func defaultSources(conf *config.Config) ([]supersense.Source, error) {
 	defaultSources := make([]supersense.Source, 0)
 
-	dur, err  := time.ParseDuration(conf.DummyPeriod)
+	dur, err := time.ParseDuration(conf.DummyPeriod)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -24,7 +24,7 @@ func defaultSources(conf *config.Config) ([]supersense.Source, error) {
 
 	defaultSources = append(defaultSources, dummy)
 
-	if len(conf.GithubRepos) != 0{
+	if len(conf.GithubRepos) != 0 {
 		var token *string = nil
 		if conf.GithubToken != "" {
 			token = &conf.GithubToken
@@ -38,16 +38,16 @@ func defaultSources(conf *config.Config) ([]supersense.Source, error) {
 		defaultSources = append(defaultSources, github)
 	}
 
-	if  conf.TwitterAccessSecret != "" && conf.TwitterAccessToken != "" &&
+	if conf.TwitterAccessSecret != "" && conf.TwitterAccessToken != "" &&
 		conf.TwitterConsumerKey != "" && conf.TwitterConsumerSecret != "" &&
 		len(conf.TwitterQuery) != 0 {
 
 		twitter, err := sources.NewTwitter(sources.TwitterClientProps{
-			ConsumerKey: conf.TwitterConsumerKey,
+			ConsumerKey:    conf.TwitterConsumerKey,
 			ConsumerSecret: conf.TwitterConsumerSecret,
-			AccessToken: conf.TwitterAccessToken,
-			AccessSecret: conf.TwitterAccessSecret,
-			QueryToTrack: conf.TwitterQuery,
+			AccessToken:    conf.TwitterAccessToken,
+			AccessSecret:   conf.TwitterAccessSecret,
+			QueryToTrack:   conf.TwitterQuery,
 		})
 		if err != nil {
 			return nil, errors.WithStack(err)

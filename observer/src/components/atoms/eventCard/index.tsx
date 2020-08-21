@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Box, Text, Flex, Image } from "theme-ui";
-import type { Event } from "../../../generated/graphql";
+import type { Event } from "@app/generated/graphql";
 import { GitHub, Twitter, Info, Share } from "react-feather";
 import { format } from "timeago.js";
 import { useSpring, animated } from "react-spring";

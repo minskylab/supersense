@@ -26,7 +26,7 @@ func LaunchServer(mux *supersense.Mux, port int64, withGraphQLPlayground bool) e
 
 	resolver := graph.NewResolver(mux)
 
-	srv := handler.New(generated.NewExecutableSchema(generated.Config{Resolvers: resolver }))
+	srv := handler.New(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
 	srv.AddTransport(transport.POST{})
 	srv.AddTransport(transport.Websocket{
 		KeepAlivePingInterval: 10 * time.Second,
@@ -43,7 +43,6 @@ func LaunchServer(mux *supersense.Mux, port int64, withGraphQLPlayground bool) e
 		http.Handle("/", playground.Handler("GraphQL playground", "/graphql"))
 		log.Infof("connect to http://localhost:%d/ for GraphQL playground", port)
 	}
-
 
 	return http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 }

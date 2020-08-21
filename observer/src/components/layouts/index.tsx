@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Box, Flex, Text } from "theme-ui";
-import { useEventsStreamSubscription, Event } from "../../generated/graphql";
-import EventCard from "../atoms/eventCard";
-
+import { useEventsStreamSubscription, Event } from "@app/generated/graphql";
+import EventCard from "@app/components/atoms/eventCard";
 
 
 interface ObserverBasicLayoutProps {

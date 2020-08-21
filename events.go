@@ -16,9 +16,9 @@ type URLEntity struct {
 
 // Entities saves three types of entities
 type Entities struct {
-	Tags  []string `json:"tags"`
+	Tags  []string      `json:"tags"`
 	Media []MediaEntity `json:"media"`
-	Urls  []URLEntity `json:"urls"`
+	Urls  []URLEntity   `json:"urls"`
 }
 
 // Event describes a simple event from a source

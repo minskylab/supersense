@@ -1,5 +1,5 @@
 import React from "react";
-import { ObserverBasicLayout } from "../layouts";
+import { ObserverBasicLayout } from "@app/components/layouts";
 
 const ObserverPage: React.FC = () => {
     return (

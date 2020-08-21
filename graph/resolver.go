@@ -14,7 +14,7 @@ import (
 
 // Resolver ...
 type Resolver struct {
-	mu    *sync.Mutex
+	mu  *sync.Mutex
 	mux *supersense.Mux
 }
 
