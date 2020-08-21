@@ -116,7 +116,7 @@ func (g *Github) Run(ctx context.Context) error {
 				// rateRemaining, _ := strconv.Atoi(rateLimitRemaining)
 
 				// if rateRemaining%1200 == 0 {
-					log.WithField("repo", repo).Warn("Github API Rate Remaining: ", rateLimitRemaining)
+					log.WithFields(log.Fields{"repo": repo, "etag": g.eTags[repo]}).Warn("Github API Rate Remaining: ", rateLimitRemaining)
 				// }
 
 				for _, event := range events {
