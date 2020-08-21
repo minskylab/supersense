@@ -3,19 +3,20 @@ package sources
 // "context"
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
-	"github.com/google/go-github/github"
 	"github.com/minskylab/supersense"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 	log "github.com/sirupsen/logrus"
-	"golang.org/x/oauth2"
 )
+
+const githubBaseURL = "https://api.github.com"
 
 // Github is a source for three git repository events: Push, Fork, PullRequest
 type Github struct {
@@ -27,6 +28,8 @@ type Github struct {
 	eTags            map[string]string
 	rateRemaining    map[string]string
 	eventsDispatched []string // in memory state persistence
+	httpClient       *http.Client
+	baseURL          string
 }
 
 // NewGithub wraps all the needs for instance a new Github source
@@ -40,38 +43,62 @@ func NewGithub(token *string, repos []string) (*Github, error) {
 		eTags:            map[string]string{},
 		rateRemaining:    map[string]string{},
 		eventsDispatched: []string{},
+		baseURL: githubBaseURL,
+		httpClient: &http.Client{
+			Timeout:       60*time.Second,
+		},
 	}
 	return source, nil
 }
 
 // TODO: Pull Request: better title
 
-// Run perform run initial procedure to spam the go-rutine in charge to sniff the github events
-func (g *Github) Run(ctx context.Context) error {
-	var httpClient *http.Client = nil
 
-	if g.token != nil {
-		ts := oauth2.StaticTokenSource(
-			&oauth2.Token{AccessToken: *g.token},
-		)
-		httpClient = oauth2.NewClient(ctx, ts)
+func (g *Github) pullEvents(owner, repo string, previousETag string, token *string) ([]*Event, *http.Response, error){
+	u := fmt.Sprintf("%s/repos/%v/%v/events", g.baseURL, owner, repo)
+	req, err := http.NewRequest(http.MethodGet, u, nil)
+	if err != nil {
+		return nil, nil, errors.WithStack(err)
 	}
 
-	client := github.NewClient(httpClient)
+	req.Header.Set("Accept",  "application/vnd.github.v3+json")
+	req.Header.Set("User-Agent", "go-github")
+	req.Header.Set("If-None-Match", previousETag)
 
+	if token != nil {
+		req.Header.Set("Authorization", "token " + *token)
+	}
+
+	resp, err := g.httpClient.Do(req)
+	if err != nil {
+		return nil, resp, errors.WithStack(err)
+	}
+
+	var events []*Event
+
+	decErr := json.NewDecoder(resp.Body).Decode(&events)
+	if decErr != nil && decErr != io.EOF {
+		return nil, nil, errors.WithStack(err)
+	}
+
+	return events, resp, nil
+}
+
+// Run perform run initial procedure to spam the go-routine in charge to sniff the github events
+func (g *Github) Run(ctx context.Context) error {
 	go func() {
 		for {
 			for _, repo := range g.repos {
 				// repo := "minskylab/supersense"
 				parts := strings.Split(repo, "/")
-				events, resp, err := client.Activity.ListRepositoryEvents(ctx,
+				events, resp, err := g.pullEvents(
 					parts[0],
 					parts[1],
-					&github.ListOptions{
-						PerPage: 250,
-					})
+					g.eTags[repo],
+					g.token)
 				if err != nil {
-					panic(err)
+					log.Errorf("%+v", err)
+					return
 				}
 
 				etag := resp.Header.Get("ETag")
@@ -86,33 +113,32 @@ func (g *Github) Run(ctx context.Context) error {
 					g.rateRemaining[repo] = rateLimitRemaining
 				}
 
-				// log.Info("etag: ", etag)
-				// log.Info("pollInterval: ", pollInterval)
-				// log.Info("rateLimitRemaining: ", rateLimitRemaining)
-				rateRemaining, _ := strconv.Atoi(rateLimitRemaining)
+				// rateRemaining, _ := strconv.Atoi(rateLimitRemaining)
 
-				if rateRemaining%1200 == 0 {
-					log.Warn("Github API Rate Remaining: ", rateLimitRemaining)
-				}
+				// if rateRemaining%1200 == 0 {
+					log.WithField("repo", repo).Warn("Github API Rate Remaining: ", rateLimitRemaining)
+				// }
 
 				for _, event := range events {
+					if event.CreatedAt == nil || event.ID == nil || event.Type == nil {
+						continue
+					}
 
-					if time.Now().Sub(event.GetCreatedAt()) > 6*time.Second {
+					if time.Now().Sub(*event.CreatedAt) > 6*time.Second {
 						continue // No old events
 					}
 
-					eventID := event.GetID()
 					for _, e := range g.eventsDispatched { // If the event has been dispatched
-						if eventID == e {
+						if *event.ID == e {
 							continue
 						}
 					}
 
-					log.Info("Github event type: " + event.GetType())
+					log.Info("Github event type: " + *event.Type)
 
 					superEvent := supersense.Event{}
-					superEvent.ID = event.GetID()
-					superEvent.CreatedAt = event.GetCreatedAt()
+					superEvent.ID = *event.ID
+					superEvent.CreatedAt = *event.CreatedAt
 					superEvent.Actor = supersense.Person{}
 					superEvent.SourceID = g.id
 					superEvent.SourceName = g.name
@@ -132,87 +158,97 @@ func (g *Github) Run(ctx context.Context) error {
 					if err != nil {
 						log.Warn(errors.WithStack(err))
 					}
-					// log.Info("")
-					// log.Info("[TYPE] ", event.GetType())
 
-					// superEvent.EventKind = event.GetType()
-
-					if event.GetActor() != nil {
-						// log.Info("[ACTOR] [NAME]", event.GetActor().GetName())
-						superEvent.Actor.Name = event.GetActor().GetName()
-						// log.Info("[ACTOR] [EMAIL]", event.GetActor().GetEmail())
-						superEvent.Actor.Email = event.GetActor().Email
-						// log.Info("[ACTOR] [USERNAME]", event.GetActor().GetLogin())
-						superEvent.Actor.Username = event.GetActor().Login
-						// log.Info("[ACTOR] [AVATAR]", event.GetActor().GetAvatarURL())
-						superEvent.Actor.Photo = event.GetActor().GetAvatarURL()
+					if event.Actor != nil {
+						if event.Actor.Name != nil {
+							superEvent.Actor.Name = *event.Actor.Name
+						}
+						if event.Actor.AvatarURL != nil {
+							superEvent.Actor.Photo = *event.Actor.AvatarURL
+						}
+						superEvent.Actor.Email = event.Actor.Email
+						superEvent.Actor.Username = event.Actor.Login
 					}
 
 					switch payload.(type) {
-					case *github.PushEvent:
-						pushEvent := payload.(*github.PushEvent)
+					case *PushEvent:
+						pushEvent := payload.(*PushEvent)
 						for _, commit := range pushEvent.Commits {
-							// log.Info("[PUSH] [COMMIT] ", commit.GetMessage())
-							superEvent.Message = commit.GetMessage()
+							if commit.Message != nil {
+								superEvent.Message = *commit.Message
+							}
 						}
 						superEvent.Title = "Push"
-						if pushEvent.GetPusher() != nil {
-							username := pushEvent.GetPusher().GetLogin()
-							superEvent.Title += " of " + username
+						if pushEvent.Pusher != nil {
+							if pushEvent.Pusher.Login != nil {
+								username := *pushEvent.Pusher.Login
+								superEvent.Title += " of " + username
+							}
 						}
 						superEvent.EventKind = "push"
-					case *github.ForkEvent:
-						forkEvent := payload.(*github.ForkEvent)
+					case *ForkEvent:
+						forkEvent := payload.(*ForkEvent)
 
-						if forkEvent.GetForkee() != nil {
+						if forkEvent.Forkee != nil {
 							forkeeRepo := ""
-							if forkEvent.GetForkee().GetOwner() != nil {
-								// log.Info("[FORK] [FORKEE_OWNER_USERNAME] ", forkEvent.GetForkee().GetOwner().GetLogin())
-								username := forkEvent.GetForkee().GetOwner().GetLogin()
-								forkeeRepo += username
-								superEvent.Title = "Fork of " + username
+							if forkEvent.Forkee.Owner != nil {
+								if forkEvent.Forkee.Owner.Login != nil {
+									username := *forkEvent.Forkee.Owner.Login
+									forkeeRepo += username
+									superEvent.Title = "Fork of " + username
+								}
 							}
-							// log.Info("[FORK] [FORKEE_NAME] ", forkEvent.GetForkee().GetName())
-							forkeeRepo += "/" + forkEvent.GetForkee().GetName()
+
+							if forkEvent.Forkee.Name != nil {
+								forkeeRepo += "/" + *forkEvent.Forkee.Name
+							}
+
 							superEvent.Message = forkeeRepo
 							superEvent.EventKind = "fork"
 						}
-					case *github.PullRequestEvent:
-						pullRequestEvent := payload.(*github.PullRequestEvent)
-						pullRequest := pullRequestEvent.GetPullRequest()
+					case *PullRequestEvent:
+						pullRequestEvent := payload.(*PullRequestEvent)
+						pullRequest := pullRequestEvent.PullRequest
 						if pullRequest != nil {
-							// log.Info("[FORK] [PULLREQUEST_TITLE] ", pullRequest.GetTitle())
-							title := pullRequest.GetTitle()
-							// log.Info("[FORK] [PULLREQUEST_BODY] ", pullRequest.GetBody())
-							body := pullRequest.GetBody()
-							// log.Info("[FORK] [PULLREQUEST_STATE] ", pullRequest.GetState())
-							state := pullRequest.GetState()
+							var title, body, state string
+							if pullRequest.Title != nil {
+								title = *pullRequest.Title
+							}
+
+							if pullRequest.Body != nil {
+								body = *pullRequest.Body
+							}
+
+							if pullRequest.State != nil {
+								state = *pullRequest.State
+							}
 
 							message := title + "\n" + body
 							superEvent.Message = message
 
 							superEvent.EventKind = strings.Trim("pull-request-"+state, "- ")
-							if pullRequest.GetUser() != nil {
-								// log.Info("[FORK] [PULLREQUEST_OWNER_NAME] ", pullRequest.GetUser().GetName())
-								// log.Info("[FORK] [PULLREQUEST_OWNER_USERNAME] ", pullRequest.GetUser().GetLogin())
-								ownerUsername := pullRequest.GetUser().GetLogin()
-								// log.Info("[FORK] [PULLREQUEST_OWNER_EMAIL]", pullRequest.GetUser().GetEmail())
 
-								superEvent.Title = "Pull Request of " + ownerUsername
+							if pullRequest.User != nil {
+								superEvent.Title = "Pull Request"
+								if pullRequest.User.Login != nil {
+									ownerUsername := *pullRequest.User.Login
+									superEvent.Title += " of " + ownerUsername
+								}
 							}
 
 						}
 
 					default:
-						log.Error(fmt.Sprintf("%T", payload), " payload type not accepted")
+						log.Error(fmt.Sprintf("%T", payload), " payload type not accepted in this stage of supersense")
 					}
 
 					superEvent.EmittedAt = time.Now()
-					g.eventsDispatched = append(g.eventsDispatched, eventID)
+					g.eventsDispatched = append(g.eventsDispatched, *event.ID)
 					g.channel <- superEvent
 				}
 			}
-			time.Sleep(3 * time.Second)
+
+			time.Sleep(1 * time.Second)
 		}
 	}()
 
