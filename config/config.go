@@ -22,12 +22,17 @@ type Config struct {
 	TwitterAccessSecret   string   `split_words:"true"`
 	TwitterQuery          []string `split_words:"true"`
 
+	Spokesman         bool   `split_words:"true" default:"false"`
+	SpokesmanName     string `split_words:"true" default:"Spokesman"`
+	SpokesmanUsername string `split_words:"true" default:"spokesman"`
+	SpokesmanEmail    string `split_words:"true"`
+
 	GraphQLPlayground bool `envconfig:"GRAPHQL_PLAYGROUND" default:"false"`
 
-	Persistence bool `split_words:"true" default:"false"`
+	Persistence               bool   `split_words:"true" default:"false"`
 	PersistenceBoltDBFilePath string `envconfig:"PERSISTENCE_BOLTDB_FILEPATH" default:"ss.db"`
-	PersistenceRedisAddress string `split_words:"true"`
-	PersistenceRedisPassword string `split_words:"true"`
+	PersistenceRedisAddress   string `split_words:"true"`
+	PersistenceRedisPassword  string `split_words:"true"`
 }
 
 func load(appName string) (*Config, error) {

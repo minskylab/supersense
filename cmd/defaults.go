@@ -70,5 +70,39 @@ func defaultSources(conf *config.Config) ([]supersense.Source, error) {
 		}).Info("Twitter source activated")
 	}
 
+	if conf.Spokesman == true && conf.SpokesmanName != "" &&
+		conf.SpokesmanUsername != "" && conf.SpokesmanEmail != "" {
+
+		spokesman, err := sources.NewSpokesman(conf.SpokesmanName, conf.SpokesmanUsername, conf.SpokesmanEmail)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		defaultSources = append(defaultSources, spokesman)
+		log.WithFields(log.Fields{
+			"name":     conf.SpokesmanName,
+			"username": conf.SpokesmanUsername,
+			"email":    conf.SpokesmanEmail,
+		}).Info("Spokesman source activated")
+	}
+
 	return defaultSources, nil
+}
+
+func specialSpokesman(conf *config.Config) (*sources.Spokesman, error){
+	var spokesman *
+	if conf.Spokesman == true && conf.SpokesmanName != "" &&
+		conf.SpokesmanUsername != "" && conf.SpokesmanEmail != "" {
+
+		spokesman, err := sources.NewSpokesman(conf.SpokesmanName, conf.SpokesmanUsername, conf.SpokesmanEmail)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+
+		log.WithFields(log.Fields{
+			"name":     conf.SpokesmanName,
+			"username": conf.SpokesmanUsername,
+			"email":    conf.SpokesmanEmail,
+		}).Info("Spokesman source activated")
+	}
 }

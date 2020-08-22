@@ -1,7 +1,6 @@
 package sources
 
 import (
-	"context"
 	"fmt"
 	"time"
 
@@ -49,10 +48,14 @@ func NewTwitter(props TwitterClientProps) (*Twitter, error) {
 		events:       eventsChan,
 	}, nil
 }
+// Identify implements the Source interface
+func (s *Twitter) Identify(nameOrID string) bool {
+	return s.sourceName == nameOrID || s.id == nameOrID
+}
 
 // Run bootstrap the necessary actions to demux and listen new tweets
 // and implements the Source interface of supersense
-func (s *Twitter) Run(ctx context.Context) error {
+func (s *Twitter) Run() error {
 	demux := twitter.NewSwitchDemux()
 	demux.Tweet = func(tweet *twitter.Tweet) {
 		entities := supersense.Entities{
@@ -140,11 +143,11 @@ func (s *Twitter) Run(ctx context.Context) error {
 }
 
 // Pipeline return a channel from where come in the events
-func (s *Twitter) Pipeline(ctx context.Context) <-chan supersense.Event {
+func (s *Twitter) Pipeline() <-chan supersense.Event {
 	return s.events
 }
 
 // Dispose return a channel from where come in the events
-func (s *Twitter) Dispose(ctx context.Context) {
+func (s *Twitter) Dispose() {
 	return
 }

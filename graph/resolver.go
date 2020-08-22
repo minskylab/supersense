@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/minskylab/supersense"
+	"github.com/minskylab/supersense/sources"
 )
 
 //go:generate go run github.com/99designs/gqlgen
@@ -16,9 +17,10 @@ import (
 type Resolver struct {
 	mu  *sync.Mutex
 	mux *supersense.Mux
+	spokesman *sources.Spokesman
 }
 
 // NewResolver returns a new resolver instance
-func NewResolver(mux *supersense.Mux) *Resolver {
-	return &Resolver{mux: mux, mu: &sync.Mutex{}}
+func NewResolver(mux *supersense.Mux, spokesman *sources.Spokesman) *Resolver {
+	return &Resolver{mux: mux, mu: &sync.Mutex{}, spokesman: spokesman}
 }

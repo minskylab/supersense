@@ -11,6 +11,7 @@ import (
 	"github.com/minskylab/supersense/persistence"
 	"github.com/minskylab/supersense/persistence/stores/boltdb"
 	"github.com/minskylab/supersense/server"
+	"github.com/minskylab/supersense/sources"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -58,7 +59,7 @@ func setupPersistence(conf *config.Config) (persistence.Store, error) {
 			if err != nil {
 				return nil, errors.WithStack(err)
 			}
-			log.WithField("filepath",conf.PersistenceBoltDBFilePath ).Info("Persistence layer activated with boltdb")
+			log.WithField("filepath", conf.PersistenceBoltDBFilePath).Info("Persistence layer activated with boltdb")
 		}
 
 	}
@@ -89,15 +90,18 @@ func launchDefaultService(done chan struct{}) error {
 		return errors.WithStack(err)
 	}
 
-
 	eventsPipe := make(chan *supersense.Event, 1)
 	go mux.Register(eventsPipe, done)
 	go internalSubscriber(eventsPipe, store)
 
-	ctx := context.Background()
-	if err := mux.RunAllSources(ctx); err != nil {
+	if err := mux.RunAllSources(); err != nil {
 		return errors.WithStack(err)
 	}
+
+	// var spokesman *sources.Spokesman = nil
+	// for _, s := range loadedSources {
+	// 	if s.Identify("spokesman") {spokesman = }
+	// }
 
 	return server.LaunchServer(mux, conf.Port, conf.GraphQLPlayground)
 }

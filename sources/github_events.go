@@ -4,9 +4,7 @@ package sources
 // The source of this file was extracted from https://github.com/google/go-github package
 //
 // Copyright 2016 The go-github AUTHORS. All rights reserved.
-//
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
+
 
 import (
 	"encoding/json"
@@ -29,30 +27,30 @@ type Event struct {
 
 // User represents a GitHub user.
 type User struct {
-	Login             *string    `json:"login,omitempty"`
-	ID                *int64     `json:"id,omitempty"`
-	NodeID            *string    `json:"node_id,omitempty"`
-	AvatarURL         *string    `json:"avatar_url,omitempty"`
-	HTMLURL           *string    `json:"html_url,omitempty"`
-	GravatarID        *string    `json:"gravatar_id,omitempty"`
-	Name              *string    `json:"name,omitempty"`
-	Company           *string    `json:"company,omitempty"`
-	Blog              *string    `json:"blog,omitempty"`
-	Location          *string    `json:"location,omitempty"`
-	Email             *string    `json:"email,omitempty"`
-	Hireable          *bool      `json:"hireable,omitempty"`
-	Bio               *string    `json:"bio,omitempty"`
-	PublicRepos       *int       `json:"public_repos,omitempty"`
-	PublicGists       *int       `json:"public_gists,omitempty"`
-	Followers         *int       `json:"followers,omitempty"`
-	Following         *int       `json:"following,omitempty"`
-	Type              *string    `json:"type,omitempty"`
-	SiteAdmin         *bool      `json:"site_admin,omitempty"`
-	TotalPrivateRepos *int       `json:"total_private_repos,omitempty"`
-	OwnedPrivateRepos *int       `json:"owned_private_repos,omitempty"`
-	PrivateGists      *int       `json:"private_gists,omitempty"`
-	DiskUsage         *int       `json:"disk_usage,omitempty"`
-	Collaborators     *int       `json:"collaborators,omitempty"`
+	Login             *string `json:"login,omitempty"`
+	ID                *int64  `json:"id,omitempty"`
+	NodeID            *string `json:"node_id,omitempty"`
+	AvatarURL         *string `json:"avatar_url,omitempty"`
+	HTMLURL           *string `json:"html_url,omitempty"`
+	GravatarID        *string `json:"gravatar_id,omitempty"`
+	Name              *string `json:"sourceName,omitempty"`
+	Company           *string `json:"company,omitempty"`
+	Blog              *string `json:"blog,omitempty"`
+	Location          *string `json:"location,omitempty"`
+	Email             *string `json:"email,omitempty"`
+	Hireable          *bool   `json:"hireable,omitempty"`
+	Bio               *string `json:"bio,omitempty"`
+	PublicRepos       *int    `json:"public_repos,omitempty"`
+	PublicGists       *int    `json:"public_gists,omitempty"`
+	Followers         *int    `json:"followers,omitempty"`
+	Following         *int    `json:"following,omitempty"`
+	Type              *string `json:"type,omitempty"`
+	SiteAdmin         *bool   `json:"site_admin,omitempty"`
+	TotalPrivateRepos *int    `json:"total_private_repos,omitempty"`
+	OwnedPrivateRepos *int    `json:"owned_private_repos,omitempty"`
+	PrivateGists      *int    `json:"private_gists,omitempty"`
+	DiskUsage         *int    `json:"disk_usage,omitempty"`
+	Collaborators     *int    `json:"collaborators,omitempty"`
 
 	// API URLs
 	URL               *string `json:"url,omitempty"`
@@ -66,37 +64,36 @@ type User struct {
 	SubscriptionsURL  *string `json:"subscriptions_url,omitempty"`
 }
 
-
 // Repository represents a GitHub repository.
 type Repository struct {
-	ID               *int64           `json:"id,omitempty"`
-	NodeID           *string          `json:"node_id,omitempty"`
-	Owner            *User            `json:"owner,omitempty"`
-	Name             *string          `json:"name,omitempty"`
-	FullName         *string          `json:"full_name,omitempty"`
-	Description      *string          `json:"description,omitempty"`
-	Homepage         *string          `json:"homepage,omitempty"`
+	ID          *int64  `json:"id,omitempty"`
+	NodeID      *string `json:"node_id,omitempty"`
+	Owner       *User   `json:"owner,omitempty"`
+	Name        *string `json:"sourceName,omitempty"`
+	FullName    *string `json:"full_name,omitempty"`
+	Description *string `json:"description,omitempty"`
+	Homepage    *string `json:"homepage,omitempty"`
 
-	DefaultBranch    *string          `json:"default_branch,omitempty"`
-	MasterBranch     *string          `json:"master_branch,omitempty"`
-	HTMLURL          *string          `json:"html_url,omitempty"`
-	CloneURL         *string          `json:"clone_url,omitempty"`
-	GitURL           *string          `json:"git_url,omitempty"`
-	MirrorURL        *string          `json:"mirror_url,omitempty"`
-	SSHURL           *string          `json:"ssh_url,omitempty"`
-	SVNURL           *string          `json:"svn_url,omitempty"`
-	Language         *string          `json:"language,omitempty"`
-	Fork             *bool            `json:"fork,omitempty"`
-	ForksCount       *int             `json:"forks_count,omitempty"`
-	NetworkCount     *int             `json:"network_count,omitempty"`
-	OpenIssuesCount  *int             `json:"open_issues_count,omitempty"`
-	StargazersCount  *int             `json:"stargazers_count,omitempty"`
-	SubscribersCount *int             `json:"subscribers_count,omitempty"`
-	WatchersCount    *int             `json:"watchers_count,omitempty"`
-	Size             *int             `json:"size,omitempty"`
-	AutoInit         *bool            `json:"auto_init,omitempty"`
-	Parent           *Repository      `json:"parent,omitempty"`
-	Source           *Repository      `json:"source,omitempty"`
+	DefaultBranch    *string     `json:"default_branch,omitempty"`
+	MasterBranch     *string     `json:"master_branch,omitempty"`
+	HTMLURL          *string     `json:"html_url,omitempty"`
+	CloneURL         *string     `json:"clone_url,omitempty"`
+	GitURL           *string     `json:"git_url,omitempty"`
+	MirrorURL        *string     `json:"mirror_url,omitempty"`
+	SSHURL           *string     `json:"ssh_url,omitempty"`
+	SVNURL           *string     `json:"svn_url,omitempty"`
+	Language         *string     `json:"language,omitempty"`
+	Fork             *bool       `json:"fork,omitempty"`
+	ForksCount       *int        `json:"forks_count,omitempty"`
+	NetworkCount     *int        `json:"network_count,omitempty"`
+	OpenIssuesCount  *int        `json:"open_issues_count,omitempty"`
+	StargazersCount  *int        `json:"stargazers_count,omitempty"`
+	SubscribersCount *int        `json:"subscribers_count,omitempty"`
+	WatchersCount    *int        `json:"watchers_count,omitempty"`
+	Size             *int        `json:"size,omitempty"`
+	AutoInit         *bool       `json:"auto_init,omitempty"`
+	Parent           *Repository `json:"parent,omitempty"`
+	Source           *Repository `json:"source,omitempty"`
 
 	Permissions      *map[string]bool `json:"permissions,omitempty"`
 	AllowRebaseMerge *bool            `json:"allow_rebase_merge,omitempty"`
@@ -183,9 +180,8 @@ func (e *Event) ParsePayload() (payload interface{}, err error) {
 	return payload, err
 }
 
-
 // CreateEvent represents a created repository, branch, or tag.
-// The Webhook event name is "create".
+// The Webhook event sourceName is "create".
 //
 // Note: webhooks will not receive this event for created repositories.
 // Additionally, webhooks will not receive this event for tags if more
@@ -200,14 +196,13 @@ type CreateEvent struct {
 	Description  *string `json:"description,omitempty"`
 
 	// The following fields are only populated by Webhook events.
-	PusherType   *string       `json:"pusher_type,omitempty"`
-	Repo         *Repository   `json:"repository,omitempty"`
-	Sender       *User         `json:"sender,omitempty"`
+	PusherType *string     `json:"pusher_type,omitempty"`
+	Repo       *Repository `json:"repository,omitempty"`
+	Sender     *User       `json:"sender,omitempty"`
 }
 
-
 // ForkEvent is triggered when a user forks a repository.
-// The Webhook event name is "fork".
+// The Webhook event sourceName is "fork".
 //
 // GitHub API docs: https://developer.github.com/v3/activity/events/types/#forkevent
 type ForkEvent struct {
@@ -215,23 +210,23 @@ type ForkEvent struct {
 	Forkee *Repository `json:"forkee,omitempty"`
 
 	// The following fields are only populated by Webhook events.
-	Repo         *Repository   `json:"repository,omitempty"`
-	Sender       *User         `json:"sender,omitempty"`
+	Repo   *Repository `json:"repository,omitempty"`
+	Sender *User       `json:"sender,omitempty"`
 }
 
 // IssuesEvent is triggered when an issue is assigned, unassigned, labeled,
 // unlabeled, opened, closed, or reopened.
-// The Webhook event name is "issues".
+// The Webhook event sourceName is "issues".
 //
 // GitHub API docs: https://developer.github.com/v3/activity/events/types/#issuesevent
 type IssuesEvent struct {
 	// Action is the action that was performed. Possible values are: "assigned",
 	// "unassigned", "labeled", "unlabeled", "opened", "closed", "reopened", "edited".
-	Action   *string `json:"action,omitempty"`
-	Issue    *Issue  `json:"issue,omitempty"`
-	Assignee *User   `json:"assignee,omitempty"`
-	Repo         *Repository   `json:"repository,omitempty"`
-	Sender       *User         `json:"sender,omitempty"`
+	Action   *string     `json:"action,omitempty"`
+	Issue    *Issue      `json:"issue,omitempty"`
+	Assignee *User       `json:"assignee,omitempty"`
+	Repo     *Repository `json:"repository,omitempty"`
+	Sender   *User       `json:"sender,omitempty"`
 }
 
 // Issue represents a GitHub issue on a repository.
@@ -242,33 +237,33 @@ type IssuesEvent struct {
 // this is an issue, and if PullRequestLinks is not nil, this is a pull request.
 // The IsPullRequest helper method can be used to check that.
 type Issue struct {
-	ID               *int64            `json:"id,omitempty"`
-	Number           *int              `json:"number,omitempty"`
-	State            *string           `json:"state,omitempty"`
-	Locked           *bool             `json:"locked,omitempty"`
-	Title            *string           `json:"title,omitempty"`
-	Body             *string           `json:"body,omitempty"`
-	User             *User             `json:"user,omitempty"`
-	Assignee         *User             `json:"assignee,omitempty"`
-	Comments         *int              `json:"comments,omitempty"`
-	ClosedAt         *time.Time        `json:"closed_at,omitempty"`
-	CreatedAt        *time.Time        `json:"created_at,omitempty"`
-	UpdatedAt        *time.Time        `json:"updated_at,omitempty"`
-	ClosedBy         *User             `json:"closed_by,omitempty"`
-	URL              *string           `json:"url,omitempty"`
-	HTMLURL          *string           `json:"html_url,omitempty"`
-	CommentsURL      *string           `json:"comments_url,omitempty"`
-	EventsURL        *string           `json:"events_url,omitempty"`
-	LabelsURL        *string           `json:"labels_url,omitempty"`
-	RepositoryURL    *string           `json:"repository_url,omitempty"`
-	Repository       *Repository       `json:"repository,omitempty"`
-	Assignees        []*User           `json:"assignees,omitempty"`
-	NodeID           *string           `json:"node_id,omitempty"`
+	ID            *int64      `json:"id,omitempty"`
+	Number        *int        `json:"number,omitempty"`
+	State         *string     `json:"state,omitempty"`
+	Locked        *bool       `json:"locked,omitempty"`
+	Title         *string     `json:"title,omitempty"`
+	Body          *string     `json:"body,omitempty"`
+	User          *User       `json:"user,omitempty"`
+	Assignee      *User       `json:"assignee,omitempty"`
+	Comments      *int        `json:"comments,omitempty"`
+	ClosedAt      *time.Time  `json:"closed_at,omitempty"`
+	CreatedAt     *time.Time  `json:"created_at,omitempty"`
+	UpdatedAt     *time.Time  `json:"updated_at,omitempty"`
+	ClosedBy      *User       `json:"closed_by,omitempty"`
+	URL           *string     `json:"url,omitempty"`
+	HTMLURL       *string     `json:"html_url,omitempty"`
+	CommentsURL   *string     `json:"comments_url,omitempty"`
+	EventsURL     *string     `json:"events_url,omitempty"`
+	LabelsURL     *string     `json:"labels_url,omitempty"`
+	RepositoryURL *string     `json:"repository_url,omitempty"`
+	Repository    *Repository `json:"repository,omitempty"`
+	Assignees     []*User     `json:"assignees,omitempty"`
+	NodeID        *string     `json:"node_id,omitempty"`
 }
 
 // PullRequestEvent is triggered when a pull request is assigned, unassigned,
 // labeled, unlabeled, opened, closed, reopened, or synchronized.
-// The Webhook event name is "pull_request".
+// The Webhook event sourceName is "pull_request".
 //
 // GitHub API docs: https://developer.github.com/v3/activity/events/types/#pullrequestevent
 type PullRequestEvent struct {
@@ -285,9 +280,9 @@ type PullRequestEvent struct {
 	// RequestedReviewer is populated in "review_requested", "review_request_removed" event deliveries.
 	// A request affecting multiple reviewers at once is split into multiple
 	// such event deliveries, each with a single, different RequestedReviewer.
-	RequestedReviewer *User         `json:"requested_reviewer,omitempty"`
-	Repo              *Repository   `json:"repository,omitempty"`
-	Sender            *User         `json:"sender,omitempty"`
+	RequestedReviewer *User       `json:"requested_reviewer,omitempty"`
+	Repo              *Repository `json:"repository,omitempty"`
+	Sender            *User       `json:"sender,omitempty"`
 }
 
 type PullRequest struct {
@@ -331,7 +326,7 @@ type PullRequest struct {
 
 // PullRequestReviewEvent is triggered when a review is submitted on a pull
 // request.
-// The Webhook event name is "pull_request_review".
+// The Webhook event sourceName is "pull_request_review".
 //
 // GitHub API docs: https://developer.github.com/v3/activity/events/types/#pullrequestreviewevent
 type PullRequestReviewEvent struct {
@@ -339,7 +334,6 @@ type PullRequestReviewEvent struct {
 	Action      *string            `json:"action,omitempty"`
 	Review      *PullRequestReview `json:"review,omitempty"`
 	PullRequest *PullRequest       `json:"pull_request,omitempty"`
-
 }
 
 // PullRequestReview represents a review of a pull request.
@@ -356,7 +350,7 @@ type PullRequestReview struct {
 
 // PullRequestReviewCommentEvent is triggered when a comment is created on a
 // portion of the unified diff of a pull request.
-// The Webhook event name is "pull_request_review_comment".
+// The Webhook event sourceName is "pull_request_review_comment".
 //
 // GitHub API docs: https://developer.github.com/v3/activity/events/types/#pullrequestreviewcommentevent
 type PullRequestReviewCommentEvent struct {
@@ -403,23 +397,23 @@ type PushEvent struct {
 	DistinctSize *int              `json:"distinct_size,omitempty"`
 
 	// The following fields are only populated by Webhook events.
-	After        *string              `json:"after,omitempty"`
-	Created      *bool                `json:"created,omitempty"`
-	Deleted      *bool                `json:"deleted,omitempty"`
-	Forced       *bool                `json:"forced,omitempty"`
-	BaseRef      *string              `json:"base_ref,omitempty"`
-	Compare      *string              `json:"compare,omitempty"`
-	Repo         *PushEventRepository `json:"repository,omitempty"`
-	HeadCommit   *PushEventCommit     `json:"head_commit,omitempty"`
-	Pusher       *User                `json:"pusher,omitempty"`
-	Sender       *User                `json:"sender,omitempty"`
+	After      *string              `json:"after,omitempty"`
+	Created    *bool                `json:"created,omitempty"`
+	Deleted    *bool                `json:"deleted,omitempty"`
+	Forced     *bool                `json:"forced,omitempty"`
+	BaseRef    *string              `json:"base_ref,omitempty"`
+	Compare    *string              `json:"compare,omitempty"`
+	Repo       *PushEventRepository `json:"repository,omitempty"`
+	HeadCommit *PushEventCommit     `json:"head_commit,omitempty"`
+	Pusher     *User                `json:"pusher,omitempty"`
+	Sender     *User                `json:"sender,omitempty"`
 }
 
 // PushEventRepository represents the repo object in a PushEvent payload.
 type PushEventRepository struct {
 	ID              *int64              `json:"id,omitempty"`
 	NodeID          *string             `json:"node_id,omitempty"`
-	Name            *string             `json:"name,omitempty"`
+	Name            *string             `json:"sourceName,omitempty"`
 	FullName        *string             `json:"full_name,omitempty"`
 	Owner           *PushEventRepoOwner `json:"owner,omitempty"`
 	Private         *bool               `json:"private,omitempty"`
@@ -454,7 +448,7 @@ type PushEventRepository struct {
 
 // PushEventRepoOwner is a basic representation of user/org in a PushEvent payload.
 type PushEventRepoOwner struct {
-	Name  *string `json:"name,omitempty"`
+	Name  *string `json:"sourceName,omitempty"`
 	Email *string `json:"email,omitempty"`
 }
 
@@ -482,7 +476,7 @@ type PushEventCommit struct {
 // author may not correspond to a GitHub User.
 type CommitAuthor struct {
 	Date  *time.Time `json:"date,omitempty"`
-	Name  *string    `json:"name,omitempty"`
+	Name  *string    `json:"sourceName,omitempty"`
 	Email *string    `json:"email,omitempty"`
 
 	// The following fields are only populated by Webhook events.
@@ -494,7 +488,7 @@ type Timestamp struct {
 }
 
 // ReleaseEvent is triggered when a release is published.
-// The Webhook event name is "release".
+// The Webhook event sourceName is "release".
 //
 // GitHub API docs: https://developer.github.com/v3/activity/events/types/#releaseevent
 type ReleaseEvent struct {
@@ -503,29 +497,29 @@ type ReleaseEvent struct {
 	Release *RepositoryRelease `json:"release,omitempty"`
 
 	// The following fields are only populated by Webhook events.
-	Repo         *Repository   `json:"repository,omitempty"`
-	Sender       *User         `json:"sender,omitempty"`
+	Repo   *Repository `json:"repository,omitempty"`
+	Sender *User       `json:"sender,omitempty"`
 }
 
 // RepositoryRelease represents a GitHub release in a repository.
 type RepositoryRelease struct {
-	ID              *int64         `json:"id,omitempty"`
-	TagName         *string        `json:"tag_name,omitempty"`
-	TargetCommitish *string        `json:"target_commitish,omitempty"`
-	Name            *string        `json:"name,omitempty"`
-	Body            *string        `json:"body,omitempty"`
-	Draft           *bool          `json:"draft,omitempty"`
-	Prerelease      *bool          `json:"prerelease,omitempty"`
-	CreatedAt       *Timestamp     `json:"created_at,omitempty"`
-	PublishedAt     *Timestamp     `json:"published_at,omitempty"`
-	URL             *string        `json:"url,omitempty"`
-	HTMLURL         *string        `json:"html_url,omitempty"`
-	AssetsURL       *string        `json:"assets_url,omitempty"`
-	UploadURL       *string        `json:"upload_url,omitempty"`
-	ZipballURL      *string        `json:"zipball_url,omitempty"`
-	TarballURL      *string        `json:"tarball_url,omitempty"`
-	Author          *User          `json:"author,omitempty"`
-	NodeID          *string        `json:"node_id,omitempty"`
+	ID              *int64     `json:"id,omitempty"`
+	TagName         *string    `json:"tag_name,omitempty"`
+	TargetCommitish *string    `json:"target_commitish,omitempty"`
+	Name            *string    `json:"sourceName,omitempty"`
+	Body            *string    `json:"body,omitempty"`
+	Draft           *bool      `json:"draft,omitempty"`
+	Prerelease      *bool      `json:"prerelease,omitempty"`
+	CreatedAt       *Timestamp `json:"created_at,omitempty"`
+	PublishedAt     *Timestamp `json:"published_at,omitempty"`
+	URL             *string    `json:"url,omitempty"`
+	HTMLURL         *string    `json:"html_url,omitempty"`
+	AssetsURL       *string    `json:"assets_url,omitempty"`
+	UploadURL       *string    `json:"upload_url,omitempty"`
+	ZipballURL      *string    `json:"zipball_url,omitempty"`
+	TarballURL      *string    `json:"tarball_url,omitempty"`
+	Author          *User      `json:"author,omitempty"`
+	NodeID          *string    `json:"node_id,omitempty"`
 }
 
 // WatchEvent is related to starring a repository, not watching. See this API
@@ -540,6 +534,6 @@ type WatchEvent struct {
 	Action *string `json:"action,omitempty"`
 
 	// The following fields are only populated by Webhook events.
-	Repo         *Repository   `json:"repository,omitempty"`
-	Sender       *User         `json:"sender,omitempty"`
+	Repo   *Repository `json:"repository,omitempty"`
+	Sender *User       `json:"sender,omitempty"`
 }

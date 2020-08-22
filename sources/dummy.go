@@ -1,7 +1,6 @@
 package sources
 
 import (
-	"context"
 	"time"
 
 	"github.com/minskylab/supersense"
@@ -32,8 +31,14 @@ func NewDummy(period time.Duration, message string) (*Dummy, error) {
 	return source, nil
 }
 
+// Identify return true if the sourceName or the id of the source is the same
+// that method param.
+func (s *Dummy) Identify(nameOrID string) bool {
+	return s.sourceName == nameOrID || s.id == nameOrID
+}
+
 // Run starts the recurrent message issuer
-func (s *Dummy) Run(ctx context.Context) error {
+func (s *Dummy) Run() error {
 	if s.events == nil {
 		return errors.New("invalid Source, it not have an events channel")
 	}
@@ -66,11 +71,11 @@ func (s *Dummy) Run(ctx context.Context) error {
 }
 
 // Pipeline implements the supersense.Source interface
-func (s *Dummy) Pipeline(ctx context.Context) <-chan supersense.Event {
+func (s *Dummy) Pipeline() <-chan supersense.Event {
 	return s.events
 }
 
 // Dispose close all streams and flows with the source
-func (s *Dummy) Dispose(ctx context.Context) {
+func (s *Dummy) Dispose() {
 	return
 }

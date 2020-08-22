@@ -7,5 +7,5 @@ func main() {
 	if err := launchDefaultService(done); err != nil {
 		panic(fmt.Sprintf("%+v", err))
 	}
-	<- done
+	<-done
 }

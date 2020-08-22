@@ -2,7 +2,6 @@ package sources
 
 // "context"
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -23,7 +22,7 @@ const githubBaseURL = "https://api.github.com"
 // Github is a source for three git repository events: Push, Fork, PullRequest
 type Github struct {
 	id               string
-	name             string
+	sourceName       string
 	channel          chan supersense.Event
 	token            *string
 	repos            []string
@@ -32,23 +31,23 @@ type Github struct {
 	eventsDispatched []string // in memory state persistence
 	httpClient       *http.Client
 	baseURL          string
-	mu *sync.Mutex
+	mu               *sync.Mutex
 }
 
 // NewGithub wraps all the needs for instance a new Github source
 func NewGithub(token *string, repos []string) (*Github, error) {
 	source := &Github{
 		id:               uuid.NewV4().String(),
-		name:             "github",
+		sourceName:       "github",
 		channel:          make(chan supersense.Event, 10),
 		token:            token,
 		repos:            repos,
 		eTags:            map[string]string{},
 		rateRemaining:    map[string]string{},
 		eventsDispatched: []string{},
-		baseURL: githubBaseURL,
+		baseURL:          githubBaseURL,
 		httpClient: &http.Client{
-			Timeout:       60*time.Second,
+			Timeout: 60 * time.Second,
 		},
 		mu: &sync.Mutex{},
 	}
@@ -57,19 +56,19 @@ func NewGithub(token *string, repos []string) (*Github, error) {
 
 // TODO: Pull Request: better titles
 
-func (g *Github) pullEvents(owner, repo string, previousETag string, token *string) ([]*Event, *http.Response, error){
+func (g *Github) pullEvents(owner, repo string, previousETag string, token *string) ([]*Event, *http.Response, error) {
 	u := fmt.Sprintf("%s/repos/%v/%v/events", g.baseURL, owner, repo)
 	req, err := http.NewRequest(http.MethodGet, u, nil)
 	if err != nil {
 		return nil, nil, errors.WithStack(err)
 	}
 
-	req.Header.Set("Accept",  "application/vnd.github.v3+json")
+	req.Header.Set("Accept", "application/vnd.github.v3+json")
 	req.Header.Set("User-Agent", "go-github")
 	req.Header.Set("If-None-Match", previousETag)
 
 	if token != nil {
-		req.Header.Set("Authorization", "token " + *token)
+		req.Header.Set("Authorization", "token "+*token)
 	}
 
 	resp, err := g.httpClient.Do(req)
@@ -138,11 +137,11 @@ func (g *Github) fetchRepo(repo string) {
 		superEvent.CreatedAt = *event.CreatedAt
 		superEvent.Actor = supersense.Person{}
 		superEvent.SourceID = g.id
-		superEvent.SourceName = g.name
+		superEvent.SourceName = g.sourceName
 
 		// superEvent.ShareURL
 
-		superEvent.Actor.Owner = g.name
+		superEvent.Actor.Owner = g.sourceName
 		repoLink := "https://github.com/" + repo
 		superEvent.Actor.ProfileURL = &repoLink
 
@@ -254,8 +253,13 @@ func (g *Github) loopFetchRepo(repo string) {
 	}
 }
 
+// Identify implements the Source interface
+func (g *Github) Identify(nameOrID string) bool {
+	return g.sourceName == nameOrID || g.id == nameOrID
+}
+
 // Run perform run initial procedure to spam the go-routine in charge to sniff the github events
-func (g *Github) Run(ctx context.Context) error {
+func (g *Github) Run() error {
 	for _, repo := range g.repos {
 		go g.loopFetchRepo(repo)
 	}
@@ -264,11 +268,11 @@ func (g *Github) Run(ctx context.Context) error {
 }
 
 // Pipeline returns the events channel
-func (g *Github) Pipeline(ctx context.Context) <-chan supersense.Event {
+func (g *Github) Pipeline() <-chan supersense.Event {
 	return g.channel
 }
 
 // Dispose close all streams and flows with the source
-func (g *Github) Dispose(ctx context.Context) {
-	return
+func (g *Github) Dispose() {
+	close(g.channel)
 }

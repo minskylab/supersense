@@ -1,7 +1,6 @@
 package supersense
 
 import (
-	"context"
 	"sync"
 
 	"github.com/pkg/errors"
@@ -35,9 +34,9 @@ func (m *Mux) setRunningSource(s Source, isRunning bool) {
 	m.mu.Unlock()
 }
 
-func (m *Mux) sourceListener(ctx context.Context, s Source) {
+func (m *Mux) sourceListener(s Source) {
 	m.setRunningSource(s, true)
-	for event := range s.Pipeline(ctx) {
+	for event := range s.Pipeline() {
 		m.mu.Lock()
 		for _, pipe := range m.pipelines {
 			filters, filtered := m.filters[pipe]
@@ -56,19 +55,19 @@ func (m *Mux) sourceListener(ctx context.Context, s Source) {
 	m.setRunningSource(s, false)
 }
 
-func (m *Mux) addNewSource(ctx context.Context, s Source) {
+func (m *Mux) addNewSource(s Source) {
 	m.sources = append(m.sources, s)
-	go m.sourceListener(ctx, s)
+	go m.sourceListener(s)
 }
 
 // RunAllSources run all the sources at the same time
-func (m *Mux) RunAllSources(ctx context.Context) error {
+func (m *Mux) RunAllSources() error {
 	for _, s := range m.sources {
-		go m.sourceListener(ctx, s)
+		go m.sourceListener(s)
 	}
 
 	for _, s := range m.sources {
-		if err := s.Run(ctx); err != nil {
+		if err := s.Run(); err != nil {
 			return errors.WithStack(err)
 		}
 	}
@@ -95,6 +94,7 @@ func (m *Mux) deleteAndClosePipeline(pipeline chan *Event) {
 		}
 	}
 }
+
 
 // Register attach a new channel to the pipes list.
 func (m *Mux) Register(pipeline chan *Event, done <-chan struct{}, filteredSources ...string) {

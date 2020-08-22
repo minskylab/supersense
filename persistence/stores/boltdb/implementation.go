@@ -52,9 +52,9 @@ func (s *Store) initialCheck() error {
 
 	if err == storm.ErrNotFound {
 		defaultSnapshot := SnapshotSharedState{
-			ID: s.mainID,
+			ID:        s.mainID,
 			CreatedAt: time.Now(),
-			UpdateAt: time.Now(),
+			UpdateAt:  time.Now(),
 			SharedState: persistence.SharedState{
 				Board:      []*supersense.Event{},
 				LastUpdate: time.Now(),
