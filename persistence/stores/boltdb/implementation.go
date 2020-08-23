@@ -9,8 +9,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-const mainIDValue = "main_shared_state"
-const maxCurrentBoardBuffer = 10e3
 
 // SnapshotSharedState is a wrapper struct to make "storable" the SharedState
 type SnapshotSharedState struct {
@@ -25,7 +23,6 @@ type Store struct {
 	mainID    string
 	maxBuffer int64
 }
-
 
 func (s *Store) CurrentSharedState(lasts int64) (*persistence.SharedState, error) {
 	snapshot, err := s.getStateSnapshot()

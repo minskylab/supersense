@@ -8,6 +8,9 @@ import (
 	"github.com/pkg/errors"
 )
 
+const mainIDValue = "main_shared_state"
+const maxCurrentBoardBuffer = 10e3
+
 func (s *Store) saveStateSnapshot(state *SnapshotSharedState) error {
 	return s.db.Save(state)
 }
@@ -64,13 +67,19 @@ func (s *Store) getEvents(lasts int64) ([]*supersense.Event, error) {
 		lasts = maxCurrentBoardBuffer
 	}
 
-	if err := s.db.AllByIndex("EmittedAt", &board, storm.Limit(int(lasts))); err != nil {
+	if err := s.db.All(&board, storm.Limit(int(lasts))); err != nil {
 		return nil, errors.WithStack(err)
 	}
 
+	// if err := s.db.AllByIndex("EmittedAt", &board, storm.Limit(int(lasts))); err != nil {
+	// 	return nil, errors.WithStack(err)
+	// }
+
 	var finalEvents []*supersense.Event
 	for _, e := range board {
-		finalEvents = append(finalEvents, &e.Event)
+		event := supersense.Event{}
+		event = e.Event
+		finalEvents = append(finalEvents, &event)
 	}
 
 	return finalEvents, nil
