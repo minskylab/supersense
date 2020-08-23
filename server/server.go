@@ -13,6 +13,7 @@ import (
 	"github.com/minskylab/supersense"
 	"github.com/minskylab/supersense/graph"
 	"github.com/minskylab/supersense/graph/generated"
+	"github.com/minskylab/supersense/persistence"
 	"github.com/minskylab/supersense/sources"
 	log "github.com/sirupsen/logrus"
 )
@@ -20,12 +21,12 @@ import (
 const defaultPort = 8080
 
 // LaunchServer launch the graphQL server
-func LaunchServer(mux *supersense.Mux, port int64, withGraphQLPlayground bool, spokesman *sources.Spokesman) error {
+func LaunchServer(mux *supersense.Mux, port int64, withGraphQLPlayground bool, spokesman *sources.Spokesman, store persistence.Store) error {
 	if port <= 0 {
 		port = defaultPort
 	}
 
-	resolver := graph.NewResolver(mux, spokesman)
+	resolver := graph.NewResolver(mux, spokesman, store)
 
 	srv := handler.New(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
 	srv.AddTransport(transport.POST{})

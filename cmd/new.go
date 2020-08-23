@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
@@ -11,7 +10,6 @@ import (
 	"github.com/minskylab/supersense/persistence"
 	"github.com/minskylab/supersense/persistence/stores/boltdb"
 	"github.com/minskylab/supersense/server"
-	"github.com/minskylab/supersense/sources"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -40,7 +38,7 @@ func internalSubscriber(eventsPipe chan *supersense.Event, store persistence.Sto
 		)
 
 		if store != nil {
-			if _, err := store.AddEventToSharedState(event); err != nil {
+			if  err := store.AddEventToSharedState(event); err != nil {
 				log.Error(fmt.Sprintf("%+v", err))
 			}
 		}
@@ -85,6 +83,15 @@ func launchDefaultService(done chan struct{}) error {
 		return errors.WithStack(err)
 	}
 
+	spokesman, err := specialSpokesman(conf)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	if spokesman != nil {
+		mux.AddNewSource(spokesman)
+	}
+
 	store, err := setupPersistence(conf)
 	if err != nil {
 		return errors.WithStack(err)
@@ -98,10 +105,7 @@ func launchDefaultService(done chan struct{}) error {
 		return errors.WithStack(err)
 	}
 
-	// var spokesman *sources.Spokesman = nil
-	// for _, s := range loadedSources {
-	// 	if s.Identify("spokesman") {spokesman = }
-	// }
+	// TODO add functional options as a struct builder
 
-	return server.LaunchServer(mux, conf.Port, conf.GraphQLPlayground)
+	return server.LaunchServer(mux, conf.Port, conf.GraphQLPlayground, spokesman, store)
 }

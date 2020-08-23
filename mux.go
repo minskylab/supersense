@@ -60,6 +60,11 @@ func (m *Mux) addNewSource(s Source) {
 	go m.sourceListener(s)
 }
 
+// AddNewSource exports this function to public
+func (m *Mux) AddNewSource(s Source) {
+	m.addNewSource(s)
+}
+
 // RunAllSources run all the sources at the same time
 func (m *Mux) RunAllSources() error {
 	for _, s := range m.sources {
