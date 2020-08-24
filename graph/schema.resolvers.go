@@ -18,7 +18,7 @@ func (r *mutationResolver) Emit(ctx context.Context, draft model.EventDraft) (st
 	if draft.ShareURL != nil {
 		url = *draft.ShareURL
 	}
-	
+
 	entities := draftEntitiesToSSEntities(draft)
 
 	r.spokesman.Broadcast(draft.Title, draft.Message, entities, url, nil)

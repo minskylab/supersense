@@ -18,7 +18,7 @@ import (
 )
 
 const githubBaseURL = "https://api.github.com"
-
+const rateProportionToLog = 2
 // Github is a source for three git repository events: Push, Fork, PullRequest
 type Github struct {
 	id               string
@@ -109,7 +109,8 @@ func (g *Github) fetchRepo(repo string) {
 
 	rateRemaining, _ := strconv.Atoi(rateLimitRemaining)
 
-	if rateRemaining%1200 == 0 {
+	// foe each multiple of rateProportionToLog, the logger prints a warning with the current rate limit
+	if rateRemaining%rateProportionToLog == 0 {
 		log.WithFields(log.Fields{"repo": repo, "etag": g.eTags[repo]}).Warn("Github API Rate Remaining: ", rateLimitRemaining)
 	}
 
@@ -130,7 +131,7 @@ func (g *Github) fetchRepo(repo string) {
 			}
 		}
 
-		log.Info("Github event type: " + *event.Type)
+		// log.Info("Github event type: " + *event.Type)
 
 		superEvent := supersense.Event{}
 		superEvent.ID = *event.ID
