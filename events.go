@@ -26,7 +26,7 @@ type Event struct {
 	ID         string    `json:"id"`
 	Title      string    `json:"title"`
 	Entities   Entities  `json:"entities"`
-	ShareURL   string    `json:"shareUrl"`
+	ShareURL   string    `json:"shareURL"`
 	CreatedAt  time.Time `json:"createdAt"`
 	EmittedAt  time.Time `json:"emittedAt"`
 	Message    string    `json:"message"`
