@@ -18,7 +18,7 @@ import (
 )
 
 const githubBaseURL = "https://api.github.com"
-const rateProportionToLog = 2
+const rateProportionToLog = 1200
 // Github is a source for three git repository events: Push, Fork, PullRequest
 type Github struct {
 	id               string
