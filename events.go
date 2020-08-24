@@ -34,4 +34,6 @@ type Event struct {
 	SourceID   string    `json:"sourceId"`
 	SourceName string    `json:"sourceName"`
 	EventKind  string    `json:"eventKind"`
+	// New
+	Labels []string `json:"labels"`
 }

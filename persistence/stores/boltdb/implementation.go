@@ -44,7 +44,7 @@ func (s *Store) CurrentSharedState(lasts int64) (*persistence.SharedState, error
 }
 
 func (s *Store) AddEventToSharedState(event *supersense.Event) error {
-	return s.saveNewEvent(Event{Event: *event})
+	return s.saveNewEvent(Event{Event: *event, ID: event.ID, EmittedAt: event.EmittedAt})
 }
 
 func (s *Store) Close() error {
