@@ -13,32 +13,21 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (r *mutationResolver) Login(ctx context.Context, username string, password string) (*model.AuthResponse, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
-func (r *mutationResolver) Broadcast(ctx context.Context, draft model.EventDraft) (string, error) {
-	entities := supersense.Entities{
-		Tags:  []string{},
-		Media: []supersense.MediaEntity{},
-		Urls:  []supersense.URLEntity{},
-	}
-
+func (r *mutationResolver) Emit(ctx context.Context, draft model.EventDraft) (string, error) {
 	url := ""
 	if draft.ShareURL != nil {
 		url = *draft.ShareURL
 	}
-
-
-	if draft.Entities != nil {
-		for _, tag := range draft.Entities.Tags {
-			entities.Tags = append(entities.Tags, tag)
-		}
-	}
+	
+	entities := draftEntitiesToSSEntities(draft)
 
 	r.spokesman.Broadcast(draft.Title, draft.Message, entities, url, nil)
 
 	return draft.Message, nil
+}
+
+func (r *queryResolver) Login(ctx context.Context, username string, password string) (*model.AuthResponse, error) {
+	panic(fmt.Errorf("not implemented"))
 }
 
 func (r *queryResolver) SharedBoard(ctx context.Context, buffer int) ([]*supersense.Event, error) {
@@ -78,3 +67,4 @@ func (r *Resolver) Subscription() generated.SubscriptionResolver { return &subsc
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
+
