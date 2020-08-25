@@ -1,5 +1,7 @@
-<img src="supersense-logo.png" alt="supersense-logo" width="400" />
 
+<p align="center">
+<img src="supersense-logo.png" alt="supersense-logo" width="400" />
+</p>
 
 
 # Supersense
@@ -24,8 +26,9 @@ Supersense Observer was build with [Typescript](https://www.typescriptlang.org/)
 
 ### Architecture
 
+<p align="center">
 <img src="supersense-core.png" alt="supersense-core-architecture" width="650" />
-
+</p>
 
 
 ### Getting Started
