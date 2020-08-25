@@ -1,4 +1,3 @@
-
 <p align="center">
 <img src="supersense-logo.png" alt="supersense-logo" width="400" />
 </p>
@@ -63,7 +62,6 @@ $ yarn start
 ```
 
 
-
 // TODO
 
 // TODO
@@ -97,5 +95,4 @@ Currently supersense only accepts one way to config the service parameters: the 
 | SS_GRAPHQL_PLAYGROUND          | false         |             |
 
 
-
-// TODO
+// TODO 
