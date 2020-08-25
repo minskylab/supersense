@@ -1,4 +1,4 @@
-<img src="supersense-logo.png" alt="supersense-logo" style="zoom:33%;" />
+<img src="supersense-logo.png" alt="supersense-logo" width="400" />
 
 
 
