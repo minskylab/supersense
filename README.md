@@ -24,7 +24,7 @@ Supersense Observer was build with [Typescript](https://www.typescriptlang.org/)
 
 ### Architecture
 
-![supersense-core-architecture](supersense-core.png)
+<img src="supersense-core.png" alt="supersense-core-architecture" width="650" />
 
 
 
