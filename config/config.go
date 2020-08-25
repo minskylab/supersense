@@ -9,7 +9,13 @@ const appName = "ss" // supersense
 
 type Config struct {
 	Port int64 `default:"4000" split_words:"true"`
+	GraphQLPlayground bool `envconfig:"GRAPHQL_PLAYGROUND" default:"false"`
 
+	Persistence               bool   `split_words:"true" default:"false"`
+	PersistenceBoltDBFilePath string `envconfig:"PERSISTENCE_BOLTDB_FILEPATH" default:"ss.db"`
+	PersistenceRedisAddress   string `split_words:"true"`
+	PersistenceRedisPassword  string `split_words:"true"`
+	
 	GithubToken string   `split_words:"true"`
 	GithubRepos []string `split_words:"true"`
 
@@ -26,13 +32,6 @@ type Config struct {
 	SpokesmanName     string `split_words:"true" default:"Spokesman"`
 	SpokesmanUsername string `split_words:"true" default:"spokesman"`
 	SpokesmanEmail    string `split_words:"true"`
-
-	GraphQLPlayground bool `envconfig:"GRAPHQL_PLAYGROUND" default:"false"`
-
-	Persistence               bool   `split_words:"true" default:"false"`
-	PersistenceBoltDBFilePath string `envconfig:"PERSISTENCE_BOLTDB_FILEPATH" default:"ss.db"`
-	PersistenceRedisAddress   string `split_words:"true"`
-	PersistenceRedisPassword  string `split_words:"true"`
 }
 
 func load(appName string) (*Config, error) {
