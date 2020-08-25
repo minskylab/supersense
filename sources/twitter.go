@@ -1,7 +1,6 @@
 package sources
 
 import (
-	"context"
 	"fmt"
 	"time"
 
@@ -20,7 +19,7 @@ type Twitter struct {
 	sourceName   string
 	queryToTrack []string
 	client       *twitter.Client
-	events       *chan supersense.Event
+	events       chan supersense.Event
 }
 
 // TwitterClientProps wraps minimal information for a twitter client creation
@@ -40,19 +39,23 @@ func NewTwitter(props TwitterClientProps) (*Twitter, error) {
 	httpClient := config.Client(oauth1.NoContext, token)
 
 	client := twitter.NewClient(httpClient)
-	eventsChan := make(chan supersense.Event, 1)
+	eventsChan := make(chan supersense.Event, 10)
 	return &Twitter{
 		id:           uuid.NewV4().String(),
 		sourceName:   "twitter",
 		queryToTrack: props.QueryToTrack,
 		client:       client,
-		events:       &eventsChan,
+		events:       eventsChan,
 	}, nil
+}
+// Identify implements the Source interface
+func (s *Twitter) Identify(nameOrID string) bool {
+	return s.sourceName == nameOrID || s.id == nameOrID
 }
 
 // Run bootstrap the necessary actions to demux and listen new tweets
 // and implements the Source interface of supersense
-func (s *Twitter) Run(ctx context.Context) error {
+func (s *Twitter) Run() error {
 	demux := twitter.NewSwitchDemux()
 	demux.Tweet = func(tweet *twitter.Tweet) {
 		entities := supersense.Entities{
@@ -60,6 +63,7 @@ func (s *Twitter) Run(ctx context.Context) error {
 			Media: []supersense.MediaEntity{},
 			Tags:  []string{},
 		}
+
 		if tweet.ExtendedTweet != nil {
 			if tweet.ExtendedTweet.Entities != nil {
 				for _, url := range tweet.ExtendedTweet.Entities.Urls {
@@ -98,10 +102,10 @@ func (s *Twitter) Run(ctx context.Context) error {
 			person.Username = &tweet.User.ScreenName
 		}
 
-		*s.events <- supersense.Event{
+		s.events <- supersense.Event{
 			ID:         tweet.IDStr,
 			CreatedAt:  createdAt,
-			EmmitedAt:  time.Now(),
+			EmittedAt:  time.Now(),
 			Message:    message,
 			SourceID:   s.id,
 			SourceName: s.sourceName,
@@ -109,13 +113,15 @@ func (s *Twitter) Run(ctx context.Context) error {
 			Title:      fmt.Sprintf("Tweet of %s", tweet.User.Name),
 			Entities:   entities,
 			ShareURL:   tweet.Source,
-			Person:     person,
+			Actor:      person,
 		}
 
 	}
+
 	demux.DM = func(dm *twitter.DirectMessage) {
 		log.Infof("(DM) %s | %s", dm.SenderID, dm.Text)
 	}
+
 	demux.Event = func(event *twitter.Event) {
 		log.Warnf("(EV) %s | %s", event.Source.ID, event.Event)
 	}
@@ -124,6 +130,7 @@ func (s *Twitter) Run(ctx context.Context) error {
 		Track:         s.queryToTrack,
 		StallWarnings: twitter.Bool(true),
 	})
+
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -135,7 +142,12 @@ func (s *Twitter) Run(ctx context.Context) error {
 	return nil
 }
 
-// Events return a channel from where come in the events
-func (s *Twitter) Events(ctx context.Context) *chan supersense.Event {
+// Pipeline return a channel from where come in the events
+func (s *Twitter) Pipeline() <-chan supersense.Event {
 	return s.events
+}
+
+// Dispose return a channel from where come in the events
+func (s *Twitter) Dispose() {
+	return
 }

@@ -1,7 +1,6 @@
 package sources
 
 import (
-	"context"
 	"time"
 
 	"github.com/minskylab/supersense"
@@ -16,24 +15,30 @@ type Dummy struct {
 	sourceName string
 	clock      *time.Ticker
 	message    string
-	events     *chan supersense.Event
+	events     chan supersense.Event
 }
 
 // NewDummy creates and init a new dummy source
 func NewDummy(period time.Duration, message string) (*Dummy, error) {
-	eventsChan := make(chan supersense.Event, 1)
+	eventsChan := make(chan supersense.Event, 10)
 	source := &Dummy{
 		id:         uuid.NewV4().String(),
 		sourceName: "dummy",
 		clock:      time.NewTicker(period),
-		events:     &eventsChan,
+		events:     eventsChan,
 		message:    message,
 	}
 	return source, nil
 }
 
+// Identify return true if the sourceName or the id of the source is the same
+// that method param.
+func (s *Dummy) Identify(nameOrID string) bool {
+	return s.sourceName == nameOrID || s.id == nameOrID
+}
+
 // Run starts the recurrent message issuer
-func (s *Dummy) Run(ctx context.Context) error {
+func (s *Dummy) Run() error {
 	if s.events == nil {
 		return errors.New("invalid Source, it not have an events channel")
 	}
@@ -42,17 +47,19 @@ func (s *Dummy) Run(ctx context.Context) error {
 	go func() {
 		for {
 			event := <-s.clock.C
-			*s.events <- supersense.Event{
+			s.events <- supersense.Event{
 				ID:         uuid.NewV4().String(),
+				CreatedAt:  time.Now(),
+				Title:      "Hello Supersense",
 				Message:    s.message,
-				EmmitedAt:  event,
+				EmittedAt:  event,
 				SourceID:   s.id,
 				SourceName: s.sourceName,
 				EventKind:  "dummy",
 				ShareURL:   "https://example.com",
-				Person: supersense.Person{
+				Actor: supersense.Person{
 					Name:     "John Doe",
-					Photo:    "https://pic.jpeg",
+					Photo:    "https://api.adorable.io/avatars/72/jhondoe.png",
 					Owner:    s.sourceName,
 					Username: &username,
 				},
@@ -63,7 +70,12 @@ func (s *Dummy) Run(ctx context.Context) error {
 	return nil
 }
 
-// Events implements the supersense.Source interface
-func (s *Dummy) Events(ctx context.Context) *chan supersense.Event {
+// Pipeline implements the supersense.Source interface
+func (s *Dummy) Pipeline() <-chan supersense.Event {
 	return s.events
+}
+
+// Dispose close all streams and flows with the source
+func (s *Dummy) Dispose() {
+	return
 }
