@@ -1,13 +1,16 @@
+<img src="supersense-logo.png" alt="supersense-logo" style="zoom:33%;" />
+
+
+
 # Supersense
+
 Supersense is a simple and customizable event board. The main goal of supersense is given an open source alternative to the social walls or multiple source event trackers. At the moment, supersense implements only two sources: Twitter & Github, but the architecture was development in a scalable and extendable way.
-
-
 
 ## Technology
 
 Supersense was created with a micro-service paradigm in mind, is a stateless service easy to horizontal scale (but also can have persistence and to be an stateful service). The project has two principal services called: **Core** and **Observer**, each one is distributed using docker images and published in the DockerHub with the tags **minskylab/supersense** and **minskylab/supersense-observer** respectively.
 
-#### About the stack
+### About the stack
 
 **Core**
 
@@ -19,11 +22,9 @@ Supersense Observer was build with [Typescript](https://www.typescriptlang.org/)
 
 \* Snowpack offers two ways to use it, with its unbundled proposal using ESM and another where you can use the classical bundlers (like Webpack, Parcel).
 
+### Architecture
 
-
-#### Architecture
-
-
+![supersense-core-architecture](supersense-core.png)
 
 
 
