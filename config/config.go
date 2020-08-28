@@ -8,14 +8,14 @@ import (
 const appName = "ss" // supersense
 
 type Config struct {
-	Port int64 `default:"4000" split_words:"true"`
-	GraphQLPlayground bool `envconfig:"GRAPHQL_PLAYGROUND" default:"false"`
+	Port              int64 `default:"8080" split_words:"true"`
+	GraphQLPlayground bool  `envconfig:"GRAPHQL_PLAYGROUND" default:"false"`
 
 	Persistence               bool   `split_words:"true" default:"false"`
 	PersistenceBoltDBFilePath string `envconfig:"PERSISTENCE_BOLTDB_FILEPATH" default:"ss.db"`
 	PersistenceRedisAddress   string `split_words:"true"`
 	PersistenceRedisPassword  string `split_words:"true"`
-	
+
 	GithubToken string   `split_words:"true"`
 	GithubRepos []string `split_words:"true"`
 

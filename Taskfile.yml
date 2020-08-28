@@ -1,0 +1,16 @@
+version: '3'
+
+tasks:
+  build:
+    cmds:
+      - go build -v -o supersense cmd/*
+
+  start:
+    cmds:
+      - task: build
+      - ./supersense
+
+  docker:
+    cmds:
+      - docker build -t minskylab/supersense .
+      - docker push minskylab/supersense
