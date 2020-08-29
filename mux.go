@@ -100,7 +100,6 @@ func (m *Mux) deleteAndClosePipeline(pipeline chan *Event) {
 	}
 }
 
-
 // Register attach a new channel to the pipes list.
 func (m *Mux) Register(pipeline chan *Event, done <-chan struct{}, filteredSources ...string) {
 	m.addPipeline(pipeline, filteredSources...)

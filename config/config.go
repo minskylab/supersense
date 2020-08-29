@@ -7,6 +7,7 @@ import (
 
 const appName = "ss" // supersense
 
+// Config wraps all the necessary
 type Config struct {
 	Port              int64 `default:"8080" split_words:"true"`
 	GraphQLPlayground bool  `envconfig:"GRAPHQL_PLAYGROUND" default:"false"`
