@@ -37,9 +37,10 @@ func NewTwitter(props TwitterClientProps) (*Twitter, error) {
 	token := oauth1.NewToken(props.AccessToken, props.AccessSecret)
 
 	httpClient := config.Client(oauth1.NoContext, token)
-
+	httpClient.Timeout = 60*time.Second
 	client := twitter.NewClient(httpClient)
-	eventsChan := make(chan supersense.Event, 10)
+	eventsChan := make(chan supersense.Event, 1)
+
 	return &Twitter{
 		id:           uuid.NewV4().String(),
 		sourceName:   "twitter",

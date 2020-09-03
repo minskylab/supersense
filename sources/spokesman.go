@@ -45,9 +45,24 @@ func (s *Spokesman) Pipeline() <-chan supersense.Event {
 	return s.channel
 }
 
-func (s *Spokesman) programBroadcast(title, message string, entities supersense.Entities, url string, delay *time.Duration) {
+func (s *Spokesman) programBroadcast(name, username, photo *string, title, message string, entities supersense.Entities, url string, delay *time.Duration) {
 	if delay != nil {
 		time.Sleep(*delay)
+	}
+
+	finalName := s.name
+	if name != nil {
+		finalName = *name
+	}
+
+	finalUsername := s.username
+	if username != nil {
+		finalUsername = *username
+	}
+
+	finalPhoto := "https://api.adorable.io/avatars/72/" + finalUsername + ".png"
+	if photo != nil {
+		finalPhoto = *photo
 	}
 
 	event := supersense.Event{
@@ -58,11 +73,11 @@ func (s *Spokesman) programBroadcast(title, message string, entities supersense.
 		CreatedAt: time.Now(),
 		Message:   message,
 		Actor: supersense.Person{
-			Name:     s.name,
-			Photo:    "https://api.adorable.io/avatars/72/" + s.username + ".png",
+			Name:     finalName,
+			Photo:    finalPhoto,
 			Owner:    "supersense",
 			Email:    &s.email,
-			Username: &s.username,
+			Username: &finalUsername,
 		},
 		SourceID:   s.id,
 		SourceName: "spokesman",
@@ -72,6 +87,11 @@ func (s *Spokesman) programBroadcast(title, message string, entities supersense.
 	event.EmittedAt = time.Now()
 	s.channel <- event
 }
+
 func (s *Spokesman) Broadcast(title, message string, entities supersense.Entities, url string, delay *time.Duration) {
-	go s.programBroadcast(title, message, entities, url, delay)
+	go s.programBroadcast(nil, nil, nil, title, message, entities, url, delay)
+}
+
+func (s *Spokesman) BroadcastWithActor(name string, username *string, photo, title, message string, entities supersense.Entities, url string, delay *time.Duration) {
+	go s.programBroadcast(&name, username, &photo, title, message, entities, url, delay)
 }

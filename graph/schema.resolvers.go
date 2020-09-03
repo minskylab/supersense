@@ -21,7 +21,18 @@ func (r *mutationResolver) Emit(ctx context.Context, draft model.EventDraft) (st
 
 	entities := draftEntitiesToSSEntities(draft)
 
-	r.spokesman.Broadcast(draft.Title, draft.Message, entities, url, nil)
+	if draft.Actor != nil {
+
+		r.spokesman.BroadcastWithActor(
+			draft.Actor.Name,
+			draft.Actor.Username,
+			draft.Actor.Photo,
+			draft.Title, draft.Message, entities, url, nil,
+			)
+	}else {
+		r.spokesman.Broadcast(draft.Title, draft.Message, entities, url, nil)
+	}
+
 
 	return draft.Message, nil
 }
