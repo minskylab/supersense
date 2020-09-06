@@ -11,7 +11,11 @@ tasks:
       - task: build
       - ./supersense
 
-  docker:
+  start-docker:
+    - docker build -t ss:dev .
+    - docker run --env-file=.env -p 8080:8080 --net=host ss:dev
+
+  publish:
     cmds:
       - docker build -t minskylab/supersense .
       - docker push minskylab/supersense

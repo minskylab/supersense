@@ -29,7 +29,7 @@ func internalSubscriber(eventsPipe chan *supersense.Event, store persistence.Sto
 			username = *event.Actor.Username
 		}
 
-		log.Infof(
+		log.Debugf(
 			"[%s] %s | by: %s @%s",
 			event.SourceName,
 			cutMessage,
@@ -71,6 +71,10 @@ func launchDefaultService(done chan struct{}) error {
 	conf, err := config.LoadDefault()
 	if err != nil {
 		return errors.WithStack(err)
+	}
+
+	if conf.Debug {
+		log.SetLevel(log.DebugLevel)
 	}
 
 	loadedSources, err := defaultSources(conf)

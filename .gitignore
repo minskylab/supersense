@@ -22,3 +22,6 @@ build
 web_modules
 node_modules
 bin/
+.devcontainer/
+.vscode/
+.DS_Store

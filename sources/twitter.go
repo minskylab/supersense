@@ -49,6 +49,7 @@ func NewTwitter(props TwitterClientProps) (*Twitter, error) {
 		events:       eventsChan,
 	}, nil
 }
+
 // Identify implements the Source interface
 func (s *Twitter) Identify(nameOrID string) bool {
 	return s.sourceName == nameOrID || s.id == nameOrID
@@ -118,18 +119,16 @@ func (s *Twitter) Run() error {
 		}
 
 	}
-
 	demux.DM = func(dm *twitter.DirectMessage) {
 		log.Infof("(DM) %s | %s", dm.SenderID, dm.Text)
 	}
-
 	demux.Event = func(event *twitter.Event) {
 		log.Warnf("(EV) %s | %s", event.Source.ID, event.Event)
 	}
 
 	stream, err := s.client.Streams.Filter(&twitter.StreamFilterParams{
-		Track:         s.queryToTrack,
 		StallWarnings: twitter.Bool(true),
+		Track:         s.queryToTrack,
 	})
 
 	if err != nil {

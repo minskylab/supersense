@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strings"
 	"time"
 
 	"github.com/minskylab/supersense"
@@ -37,6 +38,16 @@ func defaultSources(conf *config.Config) ([]supersense.Source, error) {
 			token = &conf.GithubToken
 		}
 
+		// Preprocessing and cleaning TwitterQuery
+		// Why?. Answer: https://github.com/moby/moby/issues/20169
+
+		repos := make([]string, 0)
+		for _, r := range conf.GithubRepos {
+			repo := strings.ReplaceAll(r, "\"", "")
+			repo = strings.TrimSpace(repo)
+			repos = append(repos, repo)
+		}
+
 		github, err := sources.NewGithub(token, conf.GithubRepos)
 		if err != nil {
 			return nil, errors.WithStack(err)
@@ -44,7 +55,7 @@ func defaultSources(conf *config.Config) ([]supersense.Source, error) {
 
 		defaultSources = append(defaultSources, github)
 		log.WithFields(log.Fields{
-			"repos":     conf.GithubRepos,
+			"repos":     repos,
 			"withToken": token != nil,
 		}).Info("Github source activated")
 	}
@@ -53,12 +64,22 @@ func defaultSources(conf *config.Config) ([]supersense.Source, error) {
 		conf.TwitterConsumerKey != "" && conf.TwitterConsumerSecret != "" &&
 		len(conf.TwitterQuery) != 0 {
 
+		// Preprocessing and cleaning TwitterQuery
+		// Why?. Answer: https://github.com/moby/moby/issues/20169
+
+		query := make([]string, 0)
+		for _, q := range conf.TwitterQuery {
+			q1 := strings.ReplaceAll(q, "\"", "")
+			q1 = strings.TrimSpace(q)
+			query = append(query, q1)
+		}
+
 		twitter, err := sources.NewTwitter(sources.TwitterClientProps{
 			ConsumerKey:    conf.TwitterConsumerKey,
 			ConsumerSecret: conf.TwitterConsumerSecret,
 			AccessToken:    conf.TwitterAccessToken,
 			AccessSecret:   conf.TwitterAccessSecret,
-			QueryToTrack:   conf.TwitterQuery,
+			QueryToTrack:   query,
 		})
 		if err != nil {
 			return nil, errors.WithStack(err)
