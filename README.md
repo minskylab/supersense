@@ -49,7 +49,7 @@ SS_GITHUB_REPOS=minskylab/supersense,minskylab/figport,minskylab/base
 Supersense core is delivery using docker hub, to run only execute:
 
 ```shell script
-$ docker run -p 4000:4000 --env-file .env minskylab/supersense
+$ docker run -p 8080:8080 --env-file .env minskylab/supersense
 ```
 
 Observer:
@@ -94,4 +94,13 @@ Currently supersense only accepts one way to config the service parameters: the 
 - [ ] Twitter Images
 - [ ] Github project summary
 - [ ] Github open issues (extends the event demux)
-- [ ] Deployment Instructions
+- [x] Deployment Instructions
+
+### Deploy with Helm
+Before to deploy in your k8s cluster you need declare a secret with your configuration. 
+You need to define a .env file with your configuration and use the following command to create a kubernetes generic secret.
+
+```shell script
+$ kubectl create secret generic <your-secret-name> --from-env-file=.env
+```
+

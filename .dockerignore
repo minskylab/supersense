@@ -2,4 +2,4 @@ observer/
 bin/
 .env
 *.db
-supersense
+charts/supersense
