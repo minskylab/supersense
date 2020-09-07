@@ -27,7 +27,7 @@ type AuthResponse {
 input EventDraft {
     title: String!
     message: String!
-    actor: PersonDraft!
+    actor: PersonDraft
     kind: String
     shareURL: String
     entities: EntitiesDraft
@@ -35,7 +35,7 @@ input EventDraft {
 
 input PersonDraft {
     name: String!
-    photo: String!
+    photo: String
     username: String
 }
 

@@ -92,6 +92,6 @@ func (s *Spokesman) Broadcast(title, message string, entities supersense.Entitie
 	go s.programBroadcast(nil, nil, nil, title, message, entities, url, delay)
 }
 
-func (s *Spokesman) BroadcastWithActor(name string, username *string, photo, title, message string, entities supersense.Entities, url string, delay *time.Duration) {
-	go s.programBroadcast(&name, username, &photo, title, message, entities, url, delay)
+func (s *Spokesman) BroadcastWithActor(name string, username, photo *string, title, message string, entities supersense.Entities, url string, delay *time.Duration) {
+	go s.programBroadcast(&name, username, photo, title, message, entities, url, delay)
 }

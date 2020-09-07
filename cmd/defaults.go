@@ -43,8 +43,7 @@ func defaultSources(conf *config.Config) ([]supersense.Source, error) {
 
 		repos := make([]string, 0)
 		for _, r := range conf.GithubRepos {
-			repo := strings.ReplaceAll(r, "\"", "")
-			repo = strings.TrimSpace(repo)
+			repo := strings.TrimSpace(strings.ReplaceAll(r, "\"", ""))
 			repos = append(repos, repo)
 		}
 
@@ -69,8 +68,7 @@ func defaultSources(conf *config.Config) ([]supersense.Source, error) {
 
 		query := make([]string, 0)
 		for _, q := range conf.TwitterQuery {
-			q1 := strings.ReplaceAll(q, "\"", "")
-			q1 = strings.TrimSpace(q)
+			q1 := strings.TrimSpace(strings.ReplaceAll(q, "\"", ""))
 			query = append(query, q1)
 		}
 
@@ -87,7 +85,7 @@ func defaultSources(conf *config.Config) ([]supersense.Source, error) {
 
 		defaultSources = append(defaultSources, twitter)
 		log.WithFields(log.Fields{
-			"query": conf.TwitterQuery,
+			"query": query,
 		}).Info("Twitter source activated")
 	}
 
