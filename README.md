@@ -104,3 +104,11 @@ You need to define a .env file with your configuration and use the following com
 $ kubectl create secret generic <your-secret-name> --from-env-file=.env
 ```
 
+Then, now add the minsky charts repository and install supersense setting your secretRef.
+
+```shell script
+$ helm repo add minsky https://charts.minsky.cc
+$ helm repo update # optional
+$ helm install minsky/supersense --set config.secretRef=<your-secret-name>  
+```
+
