@@ -471,7 +471,7 @@ type AuthResponse {
 input EventDraft {
     title: String!
     message: String!
-    actor: PersonDraft!
+    actor: PersonDraft
     kind: String
     shareURL: String
     entities: EntitiesDraft
@@ -479,7 +479,7 @@ input EventDraft {
 
 input PersonDraft {
     name: String!
-    photo: String!
+    photo: String
     username: String
 }
 
@@ -2887,7 +2887,7 @@ func (ec *executionContext) unmarshalInputEventDraft(ctx context.Context, obj in
 			}
 		case "actor":
 			var err error
-			it.Actor, err = ec.unmarshalNPersonDraft2ᚖgithubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐPersonDraft(ctx, v)
+			it.Actor, err = ec.unmarshalOPersonDraft2ᚖgithubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐPersonDraft(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -2971,7 +2971,7 @@ func (ec *executionContext) unmarshalInputPersonDraft(ctx context.Context, obj i
 			}
 		case "photo":
 			var err error
-			it.Photo, err = ec.unmarshalNString2string(ctx, v)
+			it.Photo, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -3804,18 +3804,6 @@ func (ec *executionContext) marshalNPerson2githubᚗcomᚋminskylabᚋsupersense
 	return ec._Person(ctx, sel, &v)
 }
 
-func (ec *executionContext) unmarshalNPersonDraft2githubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐPersonDraft(ctx context.Context, v interface{}) (model.PersonDraft, error) {
-	return ec.unmarshalInputPersonDraft(ctx, v)
-}
-
-func (ec *executionContext) unmarshalNPersonDraft2ᚖgithubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐPersonDraft(ctx context.Context, v interface{}) (*model.PersonDraft, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalNPersonDraft2githubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐPersonDraft(ctx, v)
-	return &res, err
-}
-
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
 	return graphql.UnmarshalString(v)
 }
@@ -4216,6 +4204,18 @@ func (ec *executionContext) unmarshalOEventStreamFilter2ᚖgithubᚗcomᚋminsky
 		return nil, nil
 	}
 	res, err := ec.unmarshalOEventStreamFilter2githubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐEventStreamFilter(ctx, v)
+	return &res, err
+}
+
+func (ec *executionContext) unmarshalOPersonDraft2githubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐPersonDraft(ctx context.Context, v interface{}) (model.PersonDraft, error) {
+	return ec.unmarshalInputPersonDraft(ctx, v)
+}
+
+func (ec *executionContext) unmarshalOPersonDraft2ᚖgithubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐPersonDraft(ctx context.Context, v interface{}) (*model.PersonDraft, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalOPersonDraft2githubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐPersonDraft(ctx, v)
 	return &res, err
 }
 

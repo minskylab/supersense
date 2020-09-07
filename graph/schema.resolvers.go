@@ -22,17 +22,15 @@ func (r *mutationResolver) Emit(ctx context.Context, draft model.EventDraft) (st
 	entities := draftEntitiesToSSEntities(draft)
 
 	if draft.Actor != nil {
-
 		r.spokesman.BroadcastWithActor(
 			draft.Actor.Name,
 			draft.Actor.Username,
 			draft.Actor.Photo,
 			draft.Title, draft.Message, entities, url, nil,
-			)
-	}else {
+		)
+	} else {
 		r.spokesman.Broadcast(draft.Title, draft.Message, entities, url, nil)
 	}
-
 
 	return draft.Message, nil
 }
@@ -78,4 +76,3 @@ func (r *Resolver) Subscription() generated.SubscriptionResolver { return &subsc
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
-

@@ -37,7 +37,7 @@ type MediaEntityDraft struct {
 
 type PersonDraft struct {
 	Name     string  `json:"name"`
-	Photo    string  `json:"photo"`
+	Photo    *string `json:"photo"`
 	Username *string `json:"username"`
 }
 
