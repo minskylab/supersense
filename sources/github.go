@@ -19,6 +19,7 @@ import (
 
 const githubBaseURL = "https://api.github.com"
 const rateProportionToLog = 1200
+
 // Github is a source for three git repository events: Push, Fork, PullRequest
 type Github struct {
 	id               string
@@ -109,7 +110,7 @@ func (g *Github) fetchRepo(repo string) {
 
 	rateRemaining, _ := strconv.Atoi(rateLimitRemaining)
 
-	// foe each multiple of rateProportionToLog, the logger prints a warning with the current rate limit
+	// for each multiple of rateProportionToLog, the logger prints a warning with the current rate limit
 	if rateRemaining%rateProportionToLog == 0 {
 		log.WithFields(log.Fields{"repo": repo, "etag": g.eTags[repo]}).Warn("Github API Rate Remaining: ", rateLimitRemaining)
 	}
@@ -144,7 +145,7 @@ func (g *Github) fetchRepo(repo string) {
 
 		superEvent.Actor.Owner = g.sourceName
 		repoLink := "https://github.com/" + repo
-		superEvent.Actor.ProfileURL = &repoLink
+		superEvent.ShareURL = repoLink
 
 		if event == nil {
 			continue
@@ -165,6 +166,11 @@ func (g *Github) fetchRepo(repo string) {
 			}
 			superEvent.Actor.Email = event.Actor.Email
 			superEvent.Actor.Username = event.Actor.Login
+
+			if superEvent.Actor.Username != nil {
+				userRepoLink := "https://github.com/" + *superEvent.Actor.Username
+				superEvent.Actor.ProfileURL = &userRepoLink
+			}
 		}
 
 		switch payload.(type) {
@@ -175,7 +181,13 @@ func (g *Github) fetchRepo(repo string) {
 					superEvent.Message = *commit.Message
 				}
 			}
-			superEvent.Title = "Push"
+
+			if superEvent.Actor.Username != nil {
+				superEvent.Title = "Push of " + *superEvent.Actor.Username
+			} else {
+				superEvent.Title = "Push"
+			}
+
 			if pushEvent.Pusher != nil {
 				if pushEvent.Pusher.Login != nil {
 					username := *pushEvent.Pusher.Login
@@ -186,23 +198,25 @@ func (g *Github) fetchRepo(repo string) {
 		case *ForkEvent:
 			forkEvent := payload.(*ForkEvent)
 
-			if forkEvent.Forkee != nil {
-				forkeeRepo := ""
-				if forkEvent.Forkee.Owner != nil {
-					if forkEvent.Forkee.Owner.Login != nil {
-						username := *forkEvent.Forkee.Owner.Login
-						forkeeRepo += username
-						superEvent.Title = "Fork of " + username
-					}
-				}
-
-				if forkEvent.Forkee.Name != nil {
-					forkeeRepo += "/" + *forkEvent.Forkee.Name
-				}
-
-				superEvent.Message = forkeeRepo
-				superEvent.EventKind = "fork"
+			if forkEvent.Forkee == nil {
+				continue
 			}
+
+			forkeeRepo := ""
+			if forkEvent.Forkee.Owner != nil {
+				if forkEvent.Forkee.Owner.Login != nil {
+					username := *forkEvent.Forkee.Owner.Login
+					forkeeRepo += username
+					superEvent.Title = "Fork of " + username
+				}
+			}
+
+			if forkEvent.Forkee.Name != nil {
+				forkeeRepo += "/" + *forkEvent.Forkee.Name
+			}
+
+			superEvent.Message = forkeeRepo
+			superEvent.EventKind = "fork"
 		case *PullRequestEvent:
 			pullRequestEvent := payload.(*PullRequestEvent)
 			pullRequest := pullRequestEvent.PullRequest
@@ -234,9 +248,76 @@ func (g *Github) fetchRepo(repo string) {
 				}
 
 			}
+		case *Issue:
+			issueEvent := payload.(*Issue)
 
+			var title, body, state, shareURL string
+			if issueEvent.Title != nil {
+				title = *issueEvent.Title
+			}
+
+			if issueEvent.Body != nil {
+				body = *issueEvent.Body
+			}
+
+			if issueEvent.State != nil {
+				state = *issueEvent.State
+			}
+
+			if issueEvent.URL != nil {
+				shareURL = *issueEvent.URL
+			}
+
+			if issueEvent.User != nil {
+				if issueEvent.User.Login != nil {
+					ownerUsername := *issueEvent.User.Login
+					superEvent.Title += " of " + ownerUsername
+				}
+			}
+
+			superEvent.Title = title
+			superEvent.Message = body
+			superEvent.EventKind = strings.Trim("new-issue-"+state, "- ")
+			superEvent.ShareURL = shareURL
+		case *IssuesEvent:
+			issueEventWrap := payload.(*IssuesEvent)
+			var action string
+			if issueEventWrap.Action != nil {
+				action = *issueEventWrap.Action
+			}
+
+			issueEvent := issueEventWrap.Issue
+			if issueEvent == nil {
+				continue
+			}
+
+			var title, body, shareURL string
+			if issueEvent.Title != nil {
+				title = *issueEvent.Title
+			}
+
+			if issueEvent.Body != nil {
+				body = *issueEvent.Body
+			}
+
+			if issueEvent.URL != nil {
+				shareURL = *issueEvent.URL
+			}
+
+			if issueEvent.User != nil {
+				if issueEvent.User.Login != nil {
+					ownerUsername := *issueEvent.User.Login
+					superEvent.Title += " of " + ownerUsername
+				}
+			}
+
+			superEvent.Title = title
+			superEvent.Message = body
+			superEvent.EventKind = strings.Trim("issue-"+action, "- ")
+			superEvent.ShareURL = shareURL
 		default:
-			log.Warn(fmt.Sprintf("%T", payload), " payload type not accepted in this stage of supersense")
+			log.Debug(fmt.Sprintf("%T payload type not accepted in this stage of supersense", payload))
+			continue
 		}
 
 		superEvent.EmittedAt = time.Now()

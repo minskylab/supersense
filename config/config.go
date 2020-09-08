@@ -10,7 +10,7 @@ const appName = "ss" // supersense
 // Config wraps all the necessary
 type Config struct {
 	Port              int64 `default:"8080" split_words:"true"`
-	Debug 			  bool  `default:"false"`
+	Debug             bool  `default:"false"`
 	GraphQLPlayground bool  `envconfig:"GRAPHQL_PLAYGROUND" default:"false"`
 
 	Persistence               bool   `split_words:"true" default:"false"`
