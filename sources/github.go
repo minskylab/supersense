@@ -167,8 +167,10 @@ func (g *Github) fetchRepo(repo string) {
 			superEvent.Actor.Email = event.Actor.Email
 			superEvent.Actor.Username = event.Actor.Login
 
-			userRepoLink := "https://github.com/" + *superEvent.Actor.Username
-			superEvent.Actor.ProfileURL = &userRepoLink
+			if superEvent.Actor.Username != nil {
+				userRepoLink := "https://github.com/" + *superEvent.Actor.Username
+				superEvent.Actor.ProfileURL = &userRepoLink
+			}
 		}
 
 		switch payload.(type) {
@@ -179,7 +181,13 @@ func (g *Github) fetchRepo(repo string) {
 					superEvent.Message = *commit.Message
 				}
 			}
-			superEvent.Title = "Push"
+
+			if superEvent.Actor.Username != nil {
+				superEvent.Title = "Push of" + *superEvent.Actor.Username
+			} else {
+				superEvent.Title = "Push"
+			}
+
 			if pushEvent.Pusher != nil {
 				if pushEvent.Pusher.Login != nil {
 					username := *pushEvent.Pusher.Login
