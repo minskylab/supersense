@@ -183,7 +183,7 @@ func (g *Github) fetchRepo(repo string) {
 			}
 
 			if superEvent.Actor.Username != nil {
-				superEvent.Title = "Push of" + *superEvent.Actor.Username
+				superEvent.Title = "Push of " + *superEvent.Actor.Username
 			} else {
 				superEvent.Title = "Push"
 			}
