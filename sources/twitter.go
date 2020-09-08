@@ -2,6 +2,7 @@ package sources
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/dghubble/go-twitter/twitter"
@@ -165,10 +166,8 @@ func (s *Twitter) Run() error {
 			person.Username = &tweet.User.ScreenName
 		}
 
-		log.Info(tweet.Retweeted, tweet.RetweetCount)
-
 		eventTweetKind := "Tweet"
-		if tweet.Retweeted {
+		if strings.HasPrefix(strings.TrimSpace(message), "RT") {
 			eventTweetKind = "Retweet"
 		}
 
