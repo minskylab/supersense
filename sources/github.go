@@ -110,7 +110,7 @@ func (g *Github) fetchRepo(repo string) {
 
 	rateRemaining, _ := strconv.Atoi(rateLimitRemaining)
 
-	// foe each multiple of rateProportionToLog, the logger prints a warning with the current rate limit
+	// for each multiple of rateProportionToLog, the logger prints a warning with the current rate limit
 	if rateRemaining%rateProportionToLog == 0 {
 		log.WithFields(log.Fields{"repo": repo, "etag": g.eTags[repo]}).Warn("Github API Rate Remaining: ", rateLimitRemaining)
 	}
@@ -195,7 +195,6 @@ func (g *Github) fetchRepo(repo string) {
 				}
 			}
 			superEvent.EventKind = "push"
-
 		case *ForkEvent:
 			forkEvent := payload.(*ForkEvent)
 
@@ -218,7 +217,6 @@ func (g *Github) fetchRepo(repo string) {
 
 			superEvent.Message = forkeeRepo
 			superEvent.EventKind = "fork"
-
 		case *PullRequestEvent:
 			pullRequestEvent := payload.(*PullRequestEvent)
 			pullRequest := pullRequestEvent.PullRequest
@@ -250,7 +248,6 @@ func (g *Github) fetchRepo(repo string) {
 				}
 
 			}
-
 		case *Issue:
 			issueEvent := payload.(*Issue)
 
@@ -282,7 +279,6 @@ func (g *Github) fetchRepo(repo string) {
 			superEvent.Message = body
 			superEvent.EventKind = strings.Trim("new-issue-"+state, "- ")
 			superEvent.ShareURL = shareURL
-
 		case *IssuesEvent:
 			issueEventWrap := payload.(*IssuesEvent)
 			var action string
@@ -320,7 +316,8 @@ func (g *Github) fetchRepo(repo string) {
 			superEvent.EventKind = strings.Trim("issue-"+action, "- ")
 			superEvent.ShareURL = shareURL
 		default:
-			log.Warn(fmt.Sprintf("%T payload type not accepted in this stage of supersense", payload))
+			log.Debug(fmt.Sprintf("%T payload type not accepted in this stage of supersense", payload))
+			continue
 		}
 
 		superEvent.EmittedAt = time.Now()

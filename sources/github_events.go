@@ -5,7 +5,6 @@ package sources
 //
 // Copyright 2016 The go-github AUTHORS. All rights reserved.
 
-
 import (
 	"encoding/json"
 	"time"
@@ -155,6 +154,7 @@ type Repository struct {
 	TeamsURL         *string `json:"teams_url,omitempty"`
 }
 
+// ParsePayload parse the event payload in a specific kind of event.
 func (e *Event) ParsePayload() (payload interface{}, err error) {
 	switch *e.Type {
 	case "CreateEvent":
@@ -285,6 +285,7 @@ type PullRequestEvent struct {
 	Sender            *User       `json:"sender,omitempty"`
 }
 
+// PullRequest ...
 type PullRequest struct {
 	ID                  *int64     `json:"id,omitempty"`
 	Number              *int       `json:"number,omitempty"`
@@ -483,6 +484,7 @@ type CommitAuthor struct {
 	Login *string `json:"username,omitempty"` // Renamed for go-github consistency.
 }
 
+// Timestamp ...
 type Timestamp struct {
 	time.Time
 }
