@@ -89,6 +89,9 @@ func (g *Github) pullEvents(owner, repo string, previousETag string, token *stri
 
 func (g *Github) fetchRepo(repo string) {
 	parts := strings.Split(repo, "/")
+
+	g.mu.Lock()
+
 	events, resp, err := g.pullEvents(parts[0], parts[1], g.eTags[repo], g.token)
 	if err != nil {
 		log.Errorf("%+v", err)
@@ -101,7 +104,6 @@ func (g *Github) fetchRepo(repo string) {
 	rateLimitRemaining := resp.Header.Get("X-Ratelimit-Remaining")
 	// pollInterval := resp.Header.Get("X-Poll-Interval")
 
-	g.mu.Lock()
 	g.eTags[repo] = etag
 
 	if g.rateRemaining[repo] == "" {
