@@ -145,7 +145,7 @@ func (g *Github) fetchRepo(repo string) {
 
 		superEvent.Actor.Owner = g.sourceName
 		repoLink := "https://github.com/" + repo
-		superEvent.Actor.ProfileURL = &repoLink
+		superEvent.ShareURL = repoLink
 
 		if event == nil {
 			continue
@@ -166,6 +166,9 @@ func (g *Github) fetchRepo(repo string) {
 			}
 			superEvent.Actor.Email = event.Actor.Email
 			superEvent.Actor.Username = event.Actor.Login
+
+			userRepoLink := "https://github.com/" + *superEvent.Actor.Username
+			superEvent.Actor.ProfileURL = &userRepoLink
 		}
 
 		switch payload.(type) {
@@ -271,6 +274,7 @@ func (g *Github) fetchRepo(repo string) {
 			superEvent.Message = body
 			superEvent.EventKind = strings.Trim("new-issue-"+state, "- ")
 			superEvent.ShareURL = shareURL
+
 		case *IssuesEvent:
 			issueEventWrap := payload.(*IssuesEvent)
 			var action string
