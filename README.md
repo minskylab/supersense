@@ -91,13 +91,14 @@ Currently supersense only accepts one way to config the service parameters: the 
 // TODO
 
 - [ ] More easy observer configuration
-- [ ] Twitter Images
-- [ ] Github project summary
-- [ ] Github open issues (extends the event demux)
+- [x] Twitter Images
+- [x] Github project summary
+- [x] Github open issues (extends the event demux)
 - [x] Deployment Instructions
 
 ### Deploy with Helm
-Before to deploy in your k8s cluster you need declare a secret with your configuration. 
+
+Before to deploy in your k8s cluster you need declare a secret with your configuration.
 You need to define a .env file with your configuration and use the following command to create a kubernetes generic secret.
 
 ```shell script
@@ -109,6 +110,5 @@ Then, now add the minsky charts repository and install supersense setting your s
 ```shell script
 $ helm repo add minsky https://charts.minsky.cc
 $ helm repo update # optional
-$ helm install minsky/supersense --set config.secretRef=<your-secret-name>  
+$ helm install minsky/supersense --set config.secretRef=<your-secret-name>
 ```
-
