@@ -37,7 +37,7 @@ func NewTwitter(props TwitterClientProps) (*Twitter, error) {
 	token := oauth1.NewToken(props.AccessToken, props.AccessSecret)
 
 	httpClient := config.Client(oauth1.NoContext, token)
-	httpClient.Timeout = 60*time.Second
+	httpClient.Timeout = 60 * time.Second
 	client := twitter.NewClient(httpClient)
 	eventsChan := make(chan supersense.Event, 1)
 
@@ -55,6 +55,36 @@ func (s *Twitter) Identify(nameOrID string) bool {
 	return s.sourceName == nameOrID || s.id == nameOrID
 }
 
+// optimize later
+func urlAlreadyExists(urls []supersense.URLEntity, url string) bool {
+	for _, u := range urls {
+		if u.URL == url {
+			return true
+		}
+	}
+	return false
+}
+
+// optimize later
+func mediaAlreadyExists(medias []supersense.MediaEntity, mediaURL string) bool {
+	for _, m := range medias {
+		if m.URL == mediaURL {
+			return true
+		}
+	}
+	return false
+}
+
+// optimize later
+func tagAlreadyExists(tags []string, tag string) bool {
+	for _, t := range tags {
+		if t == tag {
+			return true
+		}
+	}
+	return false
+}
+
 // Run bootstrap the necessary actions to demux and listen new tweets
 // and implements the Source interface of supersense
 func (s *Twitter) Run() error {
@@ -66,24 +96,54 @@ func (s *Twitter) Run() error {
 			Tags:  []string{},
 		}
 
-		if tweet.ExtendedTweet != nil {
-			if tweet.ExtendedTweet.Entities != nil {
-				for _, url := range tweet.ExtendedTweet.Entities.Urls {
-					entities.Urls = append(entities.Urls, supersense.URLEntity{
-						DisplayURL: url.DisplayURL,
-						URL:        url.URL,
-					})
+		if tweet.ExtendedTweet != nil && tweet.ExtendedTweet.Entities != nil {
+			ents := tweet.ExtendedTweet
+			for _, url := range ents.Entities.Urls {
+				entities.Urls = append(entities.Urls, supersense.URLEntity{
+					DisplayURL: url.DisplayURL,
+					URL:        url.URL,
+				})
+			}
+
+			for _, media := range ents.Entities.Media {
+				entities.Media = append(entities.Media, supersense.MediaEntity{
+					Type: media.Type,
+					URL:  media.MediaURLHttps,
+				})
+			}
+
+			for _, tag := range ents.Entities.Hashtags {
+				entities.Tags = append(entities.Tags, tag.Text)
+			}
+		}
+
+		// more content to original tweet
+		// but with lower priority
+		if tweet.Retweeted {
+			if tweet.RetweetedStatus != nil && tweet.RetweetedStatus.Entities != nil {
+				ents := tweet.RetweetedStatus.Entities
+				for _, url := range ents.Urls {
+					if !urlAlreadyExists(entities.Urls, url.URL) {
+						entities.Urls = append(entities.Urls, supersense.URLEntity{
+							DisplayURL: url.DisplayURL,
+							URL:        url.URL,
+						})
+					}
 				}
 
-				for _, media := range tweet.ExtendedTweet.Entities.Media {
-					entities.Media = append(entities.Media, supersense.MediaEntity{
-						Type: media.Type,
-						URL:  media.MediaURLHttps,
-					})
+				for _, media := range ents.Media {
+					if !mediaAlreadyExists(entities.Media, media.MediaURLHttps) {
+						entities.Media = append(entities.Media, supersense.MediaEntity{
+							Type: media.Type,
+							URL:  media.MediaURLHttps,
+						})
+					}
 				}
 
-				for _, tag := range tweet.ExtendedTweet.Entities.Hashtags {
-					entities.Tags = append(entities.Tags, tag.Text)
+				for _, tag := range ents.Hashtags {
+					if !tagAlreadyExists(entities.Tags, tag.Text) {
+						entities.Tags = append(entities.Tags, tag.Text)
+					}
 				}
 			}
 		}
@@ -95,6 +155,7 @@ func (s *Twitter) Run() error {
 
 		createdAt, _ := time.Parse(time.RubyDate, tweet.CreatedAt)
 		person := supersense.Person{}
+
 		if tweet.User != nil {
 			person.Name = tweet.User.Name
 			person.Photo = tweet.User.ProfileImageURLHttps
@@ -102,6 +163,13 @@ func (s *Twitter) Run() error {
 			person.Email = &tweet.User.Email
 			person.ProfileURL = &tweet.User.URL
 			person.Username = &tweet.User.ScreenName
+		}
+
+		log.Info(tweet.Retweeted, tweet.RetweetCount)
+
+		eventTweetKind := "Tweet"
+		if tweet.Retweeted {
+			eventTweetKind = "Retweet"
 		}
 
 		s.events <- supersense.Event{
@@ -112,16 +180,19 @@ func (s *Twitter) Run() error {
 			SourceID:   s.id,
 			SourceName: s.sourceName,
 			EventKind:  "tweet",
-			Title:      fmt.Sprintf("Tweet of %s", tweet.User.Name),
+			Title:      fmt.Sprintf("%s of %s", eventTweetKind, tweet.User.Name),
 			Entities:   entities,
-			ShareURL:   tweet.Source,
-			Actor:      person,
+			// ShareURL:   tweet.Source,
+			ShareURL: fmt.Sprintf("https://twitter.com/i/web/status/%s", tweet.IDStr),
+			Actor:    person,
 		}
 
 	}
+
 	demux.DM = func(dm *twitter.DirectMessage) {
 		log.Infof("(DM) %s | %s", dm.SenderID, dm.Text)
 	}
+
 	demux.Event = func(event *twitter.Event) {
 		log.Warnf("(EV) %s | %s", event.Source.ID, event.Event)
 	}

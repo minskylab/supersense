@@ -38,9 +38,14 @@ func LaunchServer(mux *supersense.Mux, port int64, withGraphQLPlayground bool, s
 			},
 		},
 	})
+
+	// Allowing introspection
 	srv.Use(extension.Introspection{})
 
+	// Setting up graphql endpoint
 	http.Handle("/graphql", srv)
+
+	// If GraphQL Playground is enabled
 	if withGraphQLPlayground {
 		http.Handle("/", playground.Handler("GraphQL playground", "/graphql"))
 		log.Infof("connect to http://localhost:%d/ for GraphQL playground", port)
