@@ -9,17 +9,21 @@ import { ApolloProvider, ApolloClient, InMemoryCache } from "@apollo/client";
 import { useState, useEffect } from "react";
 
 const hostname = process.browser ? window.location.host : "127.0.0.1:8080";
+const tls = process.browser ? window.location.protocol : "http:";
+
+const https = tls === "http:" ? "http" : "https";
+const wss = tls === "http:" ? "ws" : "wss";
 
 const httpLink = new HttpLink({
-    uri: `http://${hostname}/graphql`,
+    uri: `${https}://${hostname}/graphql`,
     headers: {
-        Origin: `http://${hostname}`,
+        Origin: `${https}://${hostname}`,
     },
 });
 
 const wsLink = process.browser
     ? new WebSocketLink({
-          uri: `ws://${hostname}/graphql`,
+          uri: `${wss}://${hostname}/graphql`,
           options: {
               reconnect: true,
           },
