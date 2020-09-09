@@ -17,6 +17,7 @@ tasks:
       - yarn dev
 
   start-docker:
+    - task: build-observer
     - docker build -t ss:dev .
     - docker run --env-file=.env -p 8080:8080 --net=host ss:dev
 
