@@ -42,13 +42,18 @@ func LaunchServer(mux *supersense.Mux, port int64, withGraphQLPlayground bool, s
 	// Allowing introspection
 	srv.Use(extension.Introspection{})
 
+	// Serving static from observer build
+	fs := http.FileServer(http.Dir("./observer_static"))
+	http.Handle("/", fs)
+	log.Infof("connect to http://localhost:%d/ for the observer", port)
+
 	// Setting up graphql endpoint
 	http.Handle("/graphql", srv)
 
 	// If GraphQL Playground is enabled
 	if withGraphQLPlayground {
-		http.Handle("/", playground.Handler("GraphQL playground", "/graphql"))
-		log.Infof("connect to http://localhost:%d/ for GraphQL playground", port)
+		http.Handle("/playground", playground.Handler("GraphQL playground", "/graphql"))
+		log.Infof("connect to http://localhost:%d/playground for GraphQL playground", port)
 	}
 
 	return http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
