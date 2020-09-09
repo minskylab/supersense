@@ -3,3 +3,5 @@ bin/
 .env
 *.db
 charts/supersense
+observer
+observer_deprecated

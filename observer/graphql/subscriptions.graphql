@@ -2,21 +2,28 @@ subscription EventsStream {
     eventStream {
         id
         createdAt
-        emittedAt
-        eventKind
-        sourceName
         title
+        message
+        shareURL
+        sourceName
+        sourceID
+        eventKind
         entities {
-            media {
+            tags
+            urls {
+                displayURL
                 url
+            }
+            media {
                 type
+                url
             }
         }
         actor {
+            name
             username
             photo
-            name
+            profileURL
         }
-        message
     }
 }

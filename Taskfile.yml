@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 tasks:
   build:
@@ -6,16 +6,29 @@ tasks:
       - go fmt
       - go build -v -o supersense cmd/*
 
-  start:
+  build-observer:
+    dir: observer
     cmds:
-      - task: build
-      - ./supersense
+      - yarn build
+
+  start-observer:
+    dir: observer
+    cmds:
+      - yarn dev
 
   start-docker:
+    - task: build-observer
     - docker build -t ss:dev .
     - docker run --env-file=.env -p 8080:8080 --net=host ss:dev
 
+  start:
+    cmds:
+      - task: build-observer
+      - task: build
+      - ./supersense
+
   publish:
     cmds:
+      - task: build-observer
       - docker build -t minskylab/supersense .
       - docker push minskylab/supersense

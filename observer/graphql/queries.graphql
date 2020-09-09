@@ -1,0 +1,29 @@
+query SharedBoard($size: Int!) {
+    sharedBoard(buffer: $size) {
+        id
+        createdAt
+        title
+        message
+        shareURL
+        sourceName
+        sourceID
+        eventKind
+        entities {
+            tags
+            urls {
+                displayURL
+                url
+            }
+            media {
+                type
+                url
+            }
+        }
+        actor {
+            name
+            username
+            photo
+            profileURL
+        }
+    }
+}
