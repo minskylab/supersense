@@ -33,6 +33,7 @@ type Github struct {
 	httpClient       *http.Client
 	baseURL          string
 	mu               *sync.Mutex
+	firstTime        bool
 }
 
 // NewGithub wraps all the needs for instance a new Github source
@@ -47,6 +48,7 @@ func NewGithub(token *string, repos []string) (*Github, error) {
 		rateRemaining:    map[string]string{},
 		eventsDispatched: []string{},
 		baseURL:          githubBaseURL,
+		firstTime:        true,
 		httpClient: &http.Client{
 			Timeout: 60 * time.Second,
 		},
@@ -113,8 +115,12 @@ func (g *Github) fetchRepo(repo string) {
 	rateRemaining, _ := strconv.Atoi(rateLimitRemaining)
 
 	// for each multiple of rateProportionToLog, the logger prints a warning with the current rate limit
-	if rateRemaining%rateProportionToLog == 0 {
-		log.WithFields(log.Fields{"repo": repo, "etag": g.eTags[repo]}).Warn("Github API Rate Remaining: ", rateLimitRemaining)
+	if rateRemaining%rateProportionToLog == 0 || g.firstTime {
+		log.WithFields(log.Fields{"etag": g.eTags[repo]}).Warn("Github API Rate Remaining: ", rateLimitRemaining)
+	}
+
+	if g.firstTime {
+		g.firstTime = false
 	}
 
 	g.mu.Unlock()
@@ -236,7 +242,7 @@ func (g *Github) fetchRepo(repo string) {
 					state = *pullRequest.State
 				}
 
-				message := title + "\n" + body
+				message := title + ":\n" + body
 				superEvent.Message = message
 
 				superEvent.EventKind = strings.Trim("pull-request-"+state, "- ")
@@ -266,7 +272,11 @@ func (g *Github) fetchRepo(repo string) {
 				state = *issueEvent.State
 			}
 
-			if issueEvent.URL != nil {
+			if issueEvent.HTMLURL != nil {
+				shareURL = *issueEvent.HTMLURL
+			}
+
+			if shareURL == "" && issueEvent.URL != nil {
 				shareURL = *issueEvent.URL
 			}
 
@@ -277,10 +287,11 @@ func (g *Github) fetchRepo(repo string) {
 				}
 			}
 
-			superEvent.Title = title
+			superEvent.Title = repo + ":\n" + title
 			superEvent.Message = body
 			superEvent.EventKind = strings.Trim("new-issue-"+state, "- ")
 			superEvent.ShareURL = shareURL
+
 		case *IssuesEvent:
 			issueEventWrap := payload.(*IssuesEvent)
 			var action string
@@ -293,16 +304,20 @@ func (g *Github) fetchRepo(repo string) {
 				continue
 			}
 
-			var title, body, shareURL string
+			var title, shareURL string // body
 			if issueEvent.Title != nil {
 				title = *issueEvent.Title
 			}
 
-			if issueEvent.Body != nil {
-				body = *issueEvent.Body
+			// if issueEvent.Body != nil {
+			// 	_ = *issueEvent.Body
+			// }
+
+			if issueEvent.HTMLURL != nil {
+				shareURL = *issueEvent.HTMLURL
 			}
 
-			if issueEvent.URL != nil {
+			if shareURL == "" && issueEvent.URL != nil {
 				shareURL = *issueEvent.URL
 			}
 
@@ -313,8 +328,9 @@ func (g *Github) fetchRepo(repo string) {
 				}
 			}
 
-			superEvent.Title = title
-			superEvent.Message = body
+			superEvent.Title = "Issue Event"
+			// superEvent.Message = body
+			superEvent.Message = repo + "\n" + title
 			superEvent.EventKind = strings.Trim("issue-"+action, "- ")
 			superEvent.ShareURL = shareURL
 		default:

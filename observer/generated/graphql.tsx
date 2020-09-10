@@ -21,26 +21,6 @@ export type AuthResponse = {
   expirateAt: Scalars['Time'];
 };
 
-export type EventDraft = {
-  title: Scalars['String'];
-  message: Scalars['String'];
-  actor?: Maybe<PersonDraft>;
-  kind?: Maybe<Scalars['String']>;
-  shareURL?: Maybe<Scalars['String']>;
-  entities?: Maybe<EntitiesDraft>;
-};
-
-export type MediaEntity = {
-  __typename?: 'MediaEntity';
-  url: Scalars['String'];
-  type: Scalars['String'];
-};
-
-export type UrlEntity = {
-  __typename?: 'URLEntity';
-  url: Scalars['String'];
-  displayURL: Scalars['String'];
-};
 
 export type Query = {
   __typename?: 'Query';
@@ -59,13 +39,13 @@ export type QuerySharedBoardArgs = {
   buffer: Scalars['Int'];
 };
 
-export type EventStreamFilter = {
-  sources: Array<Scalars['String']>;
-};
-
-export type PersonDraft = {
+export type Person = {
+  __typename?: 'Person';
   name: Scalars['String'];
-  photo?: Maybe<Scalars['String']>;
+  photo: Scalars['String'];
+  owner: Scalars['String'];
+  email?: Maybe<Scalars['String']>;
+  profileURL?: Maybe<Scalars['String']>;
   username?: Maybe<Scalars['String']>;
 };
 
@@ -74,31 +54,16 @@ export type UrlEntityDraft = {
   displayURL: Scalars['String'];
 };
 
-export type Mutation = {
-  __typename?: 'Mutation';
-  emit: Scalars['String'];
+export type MediaEntity = {
+  __typename?: 'MediaEntity';
+  url: Scalars['String'];
+  type: Scalars['String'];
 };
 
-
-export type MutationEmitArgs = {
-  draft: EventDraft;
-};
-
-export type Subscription = {
-  __typename?: 'Subscription';
-  eventStream: Event;
-};
-
-
-export type SubscriptionEventStreamArgs = {
-  filter?: Maybe<EventStreamFilter>;
-};
-
-export type Entities = {
-  __typename?: 'Entities';
-  tags: Array<Scalars['String']>;
-  media: Array<MediaEntity>;
-  urls: Array<UrlEntity>;
+export type UrlEntity = {
+  __typename?: 'URLEntity';
+  url: Scalars['String'];
+  displayURL: Scalars['String'];
 };
 
 export type Event = {
@@ -116,26 +81,61 @@ export type Event = {
   eventKind: Scalars['String'];
 };
 
-
 export type EntitiesDraft = {
   tags: Array<Scalars['String']>;
   media: Array<MediaEntityDraft>;
   urls: Array<UrlEntityDraft>;
 };
 
-export type Person = {
-  __typename?: 'Person';
+export type Mutation = {
+  __typename?: 'Mutation';
+  emit: Scalars['String'];
+};
+
+
+export type MutationEmitArgs = {
+  draft: EventDraft;
+};
+
+export type PersonDraft = {
   name: Scalars['String'];
-  photo: Scalars['String'];
-  owner: Scalars['String'];
-  email?: Maybe<Scalars['String']>;
-  profileURL?: Maybe<Scalars['String']>;
+  photo?: Maybe<Scalars['String']>;
   username?: Maybe<Scalars['String']>;
 };
 
 export type MediaEntityDraft = {
   url: Scalars['String'];
   type: Scalars['String'];
+};
+
+export type Entities = {
+  __typename?: 'Entities';
+  tags: Array<Scalars['String']>;
+  media: Array<MediaEntity>;
+  urls: Array<UrlEntity>;
+};
+
+export type Subscription = {
+  __typename?: 'Subscription';
+  eventStream: Event;
+};
+
+
+export type SubscriptionEventStreamArgs = {
+  filter?: Maybe<EventStreamFilter>;
+};
+
+export type EventStreamFilter = {
+  sources: Array<Scalars['String']>;
+};
+
+export type EventDraft = {
+  title: Scalars['String'];
+  message: Scalars['String'];
+  actor?: Maybe<PersonDraft>;
+  kind?: Maybe<Scalars['String']>;
+  shareURL?: Maybe<Scalars['String']>;
+  entities?: Maybe<EntitiesDraft>;
 };
 
 export type SharedBoardQueryVariables = Exact<{
@@ -147,7 +147,7 @@ export type SharedBoardQuery = (
   { __typename?: 'Query' }
   & { sharedBoard: Array<(
     { __typename?: 'Event' }
-    & Pick<Event, 'id' | 'createdAt' | 'title' | 'message' | 'shareURL' | 'sourceName' | 'sourceID' | 'eventKind'>
+    & Pick<Event, 'id' | 'createdAt' | 'emittedAt' | 'title' | 'message' | 'shareURL' | 'sourceName' | 'sourceID' | 'eventKind'>
     & { entities: (
       { __typename?: 'Entities' }
       & Pick<Entities, 'tags'>
@@ -172,7 +172,7 @@ export type EventsStreamSubscription = (
   { __typename?: 'Subscription' }
   & { eventStream: (
     { __typename?: 'Event' }
-    & Pick<Event, 'id' | 'createdAt' | 'title' | 'message' | 'shareURL' | 'sourceName' | 'sourceID' | 'eventKind'>
+    & Pick<Event, 'id' | 'createdAt' | 'emittedAt' | 'title' | 'message' | 'shareURL' | 'sourceName' | 'sourceID' | 'eventKind'>
     & { entities: (
       { __typename?: 'Entities' }
       & Pick<Entities, 'tags'>
@@ -196,6 +196,7 @@ export const SharedBoardDocument = gql`
   sharedBoard(buffer: $size) {
     id
     createdAt
+    emittedAt
     title
     message
     shareURL
@@ -259,6 +260,7 @@ export const EventsStreamDocument = gql`
   eventStream {
     id
     createdAt
+    emittedAt
     title
     message
     shareURL

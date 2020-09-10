@@ -31,7 +31,6 @@ const ObserverBasicLayout: React.FC<ObserverBasicLayoutProps> = ({
     }, [sub.data]);
 
     useEffect(() => {
-        console.log(sharedEvents);
         if (sharedEvents) {
             setEvents(sharedEvents.sharedBoard as Event[]);
         }

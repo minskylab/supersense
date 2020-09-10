@@ -2,6 +2,7 @@ query SharedBoard($size: Int!) {
     sharedBoard(buffer: $size) {
         id
         createdAt
+        emittedAt
         title
         message
         shareURL

@@ -14,11 +14,11 @@ Supersense was created with a micro-service paradigm in mind, is a stateless ser
 
 **Core**
 
-Supersense Core was written in [Go](https://golang.org/) and uses [GraphQL](https://graphql.org) as API layer to communicate with the observer or any other custom API consumer, the main goal of core is provide a powerful and realtime API to broadcast all the events coming from the configurase sources (Twitter, Github, etc...).
+Supersense Core was written in [Go](https://golang.org) and uses [GraphQL](https://graphql.org) as API layer to communicate with the observer or any other custom API consumer, the main goal of core is provide a powerful and realtime API to broadcast all the events coming from the configurase sources (Twitter, Github, etc...).
 
 **Observer**
 
-Supersense Observer was build with [Typescript](https://www.typescriptlang.org/) and [React](https://reactjs.org/), and all the source are bundled\* using [snowpack](https://www.snowpack.dev/) a interesting modern technology that use a modern feature called [ESM](https://hacks.mozilla.org/2018/03/es-modules-a-cartoon-deep-dive/) (ES Modules) to distribute files in a unbundled mode, hence we have very fast development flow.
+Supersense Observer was build with [Typescript](https://www.typescriptlang.org) and [React](https://reactjs.org/), and all the source are bundled\* using [snowpack](https://www.snowpack.dev/) a interesting modern technology that use a modern feature called [ESM](https://hacks.mozilla.org/2018/03/es-modules-a-cartoon-deep-dive/) (ES Modules) to distribute files in a unbundled mode, hence we have very fast development flow.
 
 \* Snowpack offers two ways to use it, with its unbundled proposal using ESM and another where you can use the classical bundlers (like Webpack, Parcel).
 
@@ -50,12 +50,6 @@ Supersense core is delivery using docker hub, to run only execute:
 
 ```shell script
 $ docker run -p 8080:8080 --env-file .env minskylab/supersense
-```
-
-Observer:
-
-```shell script
-$ TODO
 ```
 
 // TODO
@@ -90,11 +84,11 @@ Currently supersense only accepts one way to config the service parameters: the 
 
 // TODO
 
-- [ ] More easy observer configuration
-- [x] Twitter Images
-- [x] Github project summary
-- [x] Github open issues (extends the event demux)
-- [x] Deployment Instructions
+-   [ ] More easy observer configuration
+-   [x] Twitter Images
+-   [x] Github project summary
+-   [x] Github open issues (extends the event demux)
+-   [x] Deployment Instructions
 
 ### Deploy with Helm
 

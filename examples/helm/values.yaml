@@ -26,4 +26,4 @@ ingress:
         - supersense-demo.dev.minsky.cc
 
 # to install only runs:
-# $ helm install ss minsky/supersense -f values.yaml
+# $ helm install <your-realease-name> minsky/supersense -f values.yaml

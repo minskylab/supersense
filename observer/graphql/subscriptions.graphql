@@ -2,6 +2,7 @@ subscription EventsStream {
     eventStream {
         id
         createdAt
+        emittedAt
         title
         message
         shareURL
