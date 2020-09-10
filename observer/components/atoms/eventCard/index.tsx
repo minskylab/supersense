@@ -74,8 +74,7 @@ const EventCard: React.FC<EventCardProps> = ({ event }: EventCardProps) => {
             </Flex>
             {event.entities.media.length > 0 ? <Image src={event.entities.media[0].url}></Image> : null}
             <Center py={4} px={4} my={"auto"}>
-                <Box>
-                    {/* <Text>{event.title.slice(0, 18)}</Text> */}
+                <Box maxWidth={"100%"}>
                     <Text sx={{ textAlign: "center" }} as={"h3"}>
                         {event.message.slice(0, 220)}
                     </Text>

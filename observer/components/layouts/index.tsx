@@ -45,9 +45,10 @@ const ObserverBasicLayout: React.FC<ObserverBasicLayoutProps> = ({
     }
 
     return (
-        <Box>
+        <>
             <Header initialTitle={initialTitle} initialMessage={initialMessage} />
             <Box
+                maxWidth={"100vw"}
                 mt={16}
                 p={4}
                 display={"grid"}
@@ -61,7 +62,7 @@ const ObserverBasicLayout: React.FC<ObserverBasicLayoutProps> = ({
                     <EventCard key={event.id} event={event} />
                 ))}
             </Box>
-        </Box>
+        </>
     );
 };
 
