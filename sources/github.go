@@ -330,7 +330,7 @@ func (g *Github) fetchRepo(repo string) {
 
 			superEvent.Title = "Issue Event"
 			// superEvent.Message = body
-			superEvent.Message = repo + "\n" + title
+			superEvent.Message = repo + ":\n" + title
 			superEvent.EventKind = strings.Trim("issue-"+action, "- ")
 			superEvent.ShareURL = shareURL
 		default:
