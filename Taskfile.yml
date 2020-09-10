@@ -27,8 +27,13 @@ tasks:
       - task: build
       - ./supersense
 
-  publish:
+  publish-docker:
     cmds:
       - task: build-observer
       - docker build -t minskylab/supersense .
       - docker push minskylab/supersense
+
+  publish-helm:
+    cmds:
+      - task: publish-docker
+      - helm push charts/supersense/ minsky
