@@ -8,22 +8,22 @@ import (
 )
 
 type Spokesman struct {
-	id       string
-	name     string
-	username string
-	email    string
-	channel  chan supersense.Event
+	id         string
+	name       string
+	username   string
+	email      string
+	channel    chan supersense.Event
 	sourceName string
 }
 
 func NewSpokesman(name, username, email string) (*Spokesman, error) {
 	source := &Spokesman{
-		id:       uuid.NewV4().String(),
+		id:         uuid.NewV4().String(),
 		sourceName: "spokesman",
-		name:     name,
-		username: username,
-		email:    email,
-		channel:  make(chan supersense.Event),
+		name:       name,
+		username:   username,
+		email:      email,
+		channel:    make(chan supersense.Event),
 	}
 	return source, nil
 }
