@@ -26,7 +26,9 @@ const EventCard: React.FC<EventCardProps> = ({ event }: EventCardProps) => {
     }, []);
 
     const eventKindToTitle = (eventKind: string): string => {
-        return eventKind.substring(0, 1).toUpperCase().concat(eventKind.substring(1).replaceAll("-", " "));
+        eventKind[0].toUpperCase();
+        const sPart = eventKind.substring(1).replace(/-/g, " ");
+        return eventKind.substring(0, 1).toUpperCase() + sPart;
     };
 
     const borderColor = useColorModeValue(theme.colors.gray["900"], theme.colors.gray["600"]);
