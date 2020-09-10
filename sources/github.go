@@ -151,6 +151,8 @@ func (g *Github) fetchRepo(repo string) {
 
 		// superEvent.ShareURL
 
+		repo = strings.Trim(repo, "/")
+
 		superEvent.Actor.Owner = g.sourceName
 		repoLink := "https://github.com/" + repo
 		superEvent.ShareURL = repoLink
@@ -211,7 +213,14 @@ func (g *Github) fetchRepo(repo string) {
 			}
 
 			forkeeRepo := ""
-			if forkEvent.Forkee.Owner != nil {
+
+			if forkEvent.Forkee != nil {
+				if forkEvent.Forkee != nil {
+					forkeeRepo = *forkEvent.Forkee.FullName
+				}
+			}
+
+			if forkeeRepo == "" && forkEvent.Forkee.Owner != nil {
 				if forkEvent.Forkee.Owner.Login != nil {
 					username := *forkEvent.Forkee.Owner.Login
 					forkeeRepo += username
@@ -219,12 +228,13 @@ func (g *Github) fetchRepo(repo string) {
 				}
 			}
 
-			if forkEvent.Forkee.Name != nil {
+			if forkeeRepo == "" && forkEvent.Forkee.Name != nil {
 				forkeeRepo += "/" + *forkEvent.Forkee.Name
 			}
 
 			superEvent.Message = repo + ":\n" + forkeeRepo
 			superEvent.EventKind = "fork"
+
 		case *PullRequestEvent:
 			pullRequestEvent := payload.(*PullRequestEvent)
 			pullRequest := pullRequestEvent.PullRequest
@@ -330,7 +340,7 @@ func (g *Github) fetchRepo(repo string) {
 
 			superEvent.Title = "Issue Event"
 			// superEvent.Message = body
-			superEvent.Message = repo + "\n" + title
+			superEvent.Message = repo + ":\n" + title
 			superEvent.EventKind = strings.Trim("issue-"+action, "- ")
 			superEvent.ShareURL = shareURL
 		default:
