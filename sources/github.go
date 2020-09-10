@@ -186,7 +186,7 @@ func (g *Github) fetchRepo(repo string) {
 			pushEvent := payload.(*PushEvent)
 			for _, commit := range pushEvent.Commits {
 				if commit.Message != nil {
-					superEvent.Message = *commit.Message
+					superEvent.Message = repo + ":\n" + *commit.Message
 				}
 			}
 
@@ -223,7 +223,7 @@ func (g *Github) fetchRepo(repo string) {
 				forkeeRepo += "/" + *forkEvent.Forkee.Name
 			}
 
-			superEvent.Message = forkeeRepo
+			superEvent.Message = repo + ":\n" + forkeeRepo
 			superEvent.EventKind = "fork"
 		case *PullRequestEvent:
 			pullRequestEvent := payload.(*PullRequestEvent)
