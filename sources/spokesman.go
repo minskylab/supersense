@@ -7,23 +7,25 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
+// Spokesman is a source useful to emit custom message to your event board
 type Spokesman struct {
-	id       string
-	name     string
-	username string
-	email    string
-	channel  chan supersense.Event
+	id         string
+	name       string
+	username   string
+	email      string
+	channel    chan supersense.Event
 	sourceName string
 }
 
+// NewSpokesman creates and return a new bootstraped Spokesman struct
 func NewSpokesman(name, username, email string) (*Spokesman, error) {
 	source := &Spokesman{
-		id:       uuid.NewV4().String(),
+		id:         uuid.NewV4().String(),
 		sourceName: "spokesman",
-		name:     name,
-		username: username,
-		email:    email,
-		channel:  make(chan supersense.Event),
+		name:       name,
+		username:   username,
+		email:      email,
+		channel:    make(chan supersense.Event),
 	}
 	return source, nil
 }
@@ -33,14 +35,17 @@ func (s *Spokesman) Identify(nameOrID string) bool {
 	return s.sourceName == nameOrID || s.id == nameOrID
 }
 
+// Run starts the spokesman source
 func (s *Spokesman) Run() error {
 	return nil
 }
 
+// Dispose close all streams and flows with the source
 func (s *Spokesman) Dispose() {
 	close(s.channel)
 }
 
+// Pipeline is necessary to retreive the spokesman events chanel
 func (s *Spokesman) Pipeline() <-chan supersense.Event {
 	return s.channel
 }
@@ -88,10 +93,12 @@ func (s *Spokesman) programBroadcast(name, username, photo *string, title, messa
 	s.channel <- event
 }
 
+// Broadcast emit a new message without external actor information
 func (s *Spokesman) Broadcast(title, message string, entities supersense.Entities, url string, delay *time.Duration) {
 	go s.programBroadcast(nil, nil, nil, title, message, entities, url, delay)
 }
 
+// BroadcastWithActor emit a new message with custom actor information
 func (s *Spokesman) BroadcastWithActor(name string, username, photo *string, title, message string, entities supersense.Entities, url string, delay *time.Duration) {
 	go s.programBroadcast(&name, username, photo, title, message, entities, url, delay)
 }
