@@ -38,7 +38,7 @@ func internalSubscriber(eventsPipe chan *supersense.Event, store persistence.Sto
 		)
 
 		if store != nil {
-			if  err := store.AddEventToSharedState(event); err != nil {
+			if err := store.AddEventToSharedState(event); err != nil {
 				log.Error(fmt.Sprintf("%+v", err))
 			}
 		}
@@ -48,6 +48,7 @@ func internalSubscriber(eventsPipe chan *supersense.Event, store persistence.Sto
 func setupPersistence(conf *config.Config) (persistence.Store, error) {
 	var store persistence.Store
 	var err error
+
 	if conf.Persistence {
 		if conf.PersistenceRedisAddress != "" && conf.PersistenceRedisPassword != "" {
 			// TODO: Implement redis store

@@ -58,7 +58,6 @@ func NewGithub(token *string, repos []string) (*Github, error) {
 }
 
 // TODO: Pull Request: better titles
-
 func (g *Github) pullEvents(owner, repo string, previousETag string, token *string) ([]*Event, *http.Response, error) {
 	u := fmt.Sprintf("%s/repos/%v/%v/events", g.baseURL, owner, repo)
 	req, err := http.NewRequest(http.MethodGet, u, nil)
@@ -76,7 +75,7 @@ func (g *Github) pullEvents(owner, repo string, previousETag string, token *stri
 
 	resp, err := g.httpClient.Do(req)
 	if err != nil {
-		return nil, resp, errors.WithStack(err)
+		return nil, nil, errors.WithStack(err)
 	}
 
 	var events []*Event
@@ -97,6 +96,11 @@ func (g *Github) fetchRepo(repo string) {
 	events, resp, err := g.pullEvents(parts[0], parts[1], g.eTags[repo], g.token)
 	if err != nil {
 		log.Errorf("%+v", err)
+		return
+	}
+
+	if resp == nil {
+		log.Error("Invalid response from GitHub Events API.")
 		return
 	}
 
