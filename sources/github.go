@@ -78,11 +78,15 @@ func (g *Github) pullEvents(owner, repo string, previousETag string, token *stri
 		return nil, nil, errors.WithStack(err)
 	}
 
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNotModified {
+		log.Warnf("Github API response code: %d", resp.StatusCode)
+	}
+
 	var events []*Event
 
 	decErr := json.NewDecoder(resp.Body).Decode(&events)
 	if decErr != nil && decErr != io.EOF {
-		return nil, nil, errors.WithStack(err)
+		return nil, nil, errors.WithStack(decErr)
 	}
 
 	return events, resp, nil
