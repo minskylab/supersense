@@ -1,7 +1,9 @@
 package boltdb
 
 import (
+	"github.com/asdine/storm/v3"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -28,7 +30,7 @@ func (s *Store) SaveCredential(username, password string) error {
 // ValidateCredential verify if your credentials are ok
 func (s *Store) ValidateCredential(username, password string) (bool, error) {
 	c := new(credentials)
-	if err := s.db.Find("Username", username, c); err != nil {
+	if err := s.db.One("Username", username, c); err != nil {
 		return false, errors.WithStack(err)
 	}
 
@@ -67,4 +69,40 @@ func (s *Store) UpdateCredential(username, password, newPassword string) error {
 	}
 
 	return nil
+}
+
+// ForceUpdateCredential forces the inmediatly update of your credential
+func (s *Store) ForceUpdateCredential(username, newPassword string) error {
+	log.Warnf("Forcing update of your \"%s\" credential.", username)
+
+	newHashedPass, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	c := new(credentials)
+	if err := s.db.One("Username", username, c); err != nil {
+		return errors.WithStack(err)
+	}
+
+	c.Password = string(newHashedPass)
+
+	if err = s.db.Update(c); err != nil {
+		return errors.WithStack(err)
+	}
+
+	return nil
+}
+
+// UsernameExists check if your username exists
+func (s *Store) UsernameExists(username string) (bool, error) {
+	c := new(credentials)
+	if err := s.db.One("Username", username, c); err != nil {
+		if err == storm.ErrNotFound {
+			return false, nil
+		}
+		return false, errors.WithStack(err)
+	}
+
+	return true, nil
 }
