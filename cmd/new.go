@@ -51,20 +51,21 @@ func setupPersistence(conf *config.Config) (persistence.Store, error) {
 	var store persistence.Store
 	var err error
 
-	if conf.Persistence {
-		if conf.PersistenceRedisAddress != "" && conf.PersistenceRedisPassword != "" {
-			// TODO: Implement redis store
-			log.Warn("At the moment the redis persistence layer are not implemented :(")
-		} else if conf.PersistenceBoltDBFilePath != "" {
-			store, err = boltdb.NewStore(conf.PersistenceBoltDBFilePath, -1)
-			if err != nil {
-				return nil, errors.WithStack(err)
-			}
-
-			log.WithField("filepath", conf.PersistenceBoltDBFilePath).Info("Persistence layer activated with boltdb")
+	// Always persistence will be activated
+	//
+	// if conf.Persistence {
+	if conf.PersistenceRedisAddress != "" && conf.PersistenceRedisPassword != "" {
+		// TODO: Implement redis store
+		log.Warn("At the moment the redis persistence layer are not implemented :(")
+	} else if conf.PersistenceBoltDBFilePath != "" {
+		store, err = boltdb.NewStore(conf.PersistenceBoltDBFilePath, -1)
+		if err != nil {
+			return nil, errors.WithStack(err)
 		}
 
+		log.WithField("filepath", conf.PersistenceBoltDBFilePath).Info("Persistence layer activated with boltdb")
 	}
+	// }
 
 	return store, nil
 }
@@ -77,8 +78,22 @@ func setupCredentials(conf config.Config, store persistence.Store) error {
 
 	password := conf.RootCredentialPassword
 
-	if password == "" {
-		log.Info("Root password not detected")
+	credExists, err := store.UsernameExists(username)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	if credExists && password != "" { // Update password with exist credential
+		log.Info("Forcing crendential update")
+		if err := store.ForceUpdateCredential(username, password); err != nil {
+			return errors.WithStack(err)
+		}
+
+		return nil
+	}
+
+	if !credExists && password == "" { // No credential exists
+		log.Info("Credential password not detected")
 
 		charset := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 		source := rand.New(rand.NewSource(time.Now().Unix()))
@@ -91,14 +106,14 @@ func setupCredentials(conf config.Config, store persistence.Store) error {
 
 		password = string(b)
 		log.Info("New auto-generated password: " + password)
+
+		if err := store.SaveCredential(username, password); err != nil {
+			return errors.WithStack(err)
+		}
 	}
 
-	valid, err := store.ValidateCredential(username, password)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	if !valid {
+	if !credExists && password != "" { // No credentials, but complete defined
+		log.Info("Saving your new credentials")
 		if err := store.SaveCredential(username, password); err != nil {
 			return errors.WithStack(err)
 		}
@@ -143,7 +158,12 @@ func launchDefaultService(done chan struct{}) error {
 		return errors.WithStack(err)
 	}
 
+	if err := setupCredentials(*conf, store); err != nil {
+		return errors.WithStack(err)
+	}
+
 	eventsPipe := make(chan *supersense.Event, 1)
+
 	go mux.Register(eventsPipe, done)
 	go internalSubscriber(eventsPipe, store)
 
@@ -153,5 +173,5 @@ func launchDefaultService(done chan struct{}) error {
 
 	// TODO add functional options as a struct builder
 
-	return server.LaunchServer(mux, conf.Port, conf.GraphQLPlayground, spokesman, store)
+	return server.LaunchServer(mux, conf, conf.GraphQLPlayground, spokesman, store)
 }

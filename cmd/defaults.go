@@ -92,10 +92,9 @@ func defaultSources(conf *config.Config) ([]supersense.Source, error) {
 	return defaultSources, nil
 }
 
-func specialSpokesman(conf *config.Config) (*sources.Spokesman, error){
+func specialSpokesman(conf *config.Config) (*sources.Spokesman, error) {
 	var spokesman *sources.Spokesman
 	var err error
-
 
 	if conf.Spokesman == true && conf.SpokesmanName != "" && conf.SpokesmanUsername != "" {
 		spokesman, err = sources.NewSpokesman(conf.SpokesmanName, conf.SpokesmanUsername, conf.SpokesmanEmail)
@@ -110,5 +109,5 @@ func specialSpokesman(conf *config.Config) (*sources.Spokesman, error){
 		}).Info("Spokesman source activated")
 	}
 
-	return spokesman,nil
+	return spokesman, nil
 }
