@@ -50,7 +50,7 @@ func (s *Spokesman) Pipeline() <-chan supersense.Event {
 	return s.channel
 }
 
-func (s *Spokesman) programBroadcast(name, username, photo *string, title, message string, entities supersense.Entities, url string, delay *time.Duration) {
+func (s *Spokesman) programBroadcast(name, username, photo, title *string, message string, entities supersense.Entities, url string, delay *time.Duration) {
 	if delay != nil {
 		time.Sleep(*delay)
 	}
@@ -70,9 +70,14 @@ func (s *Spokesman) programBroadcast(name, username, photo *string, title, messa
 		finalPhoto = *photo
 	}
 
+	t := ""
+	if title != nil {
+		t = *title
+	}
+
 	event := supersense.Event{
 		ID:        uuid.NewV4().String(),
-		Title:     title,
+		Title:     t,
 		Entities:  entities,
 		ShareURL:  url,
 		CreatedAt: time.Now(),
@@ -94,11 +99,11 @@ func (s *Spokesman) programBroadcast(name, username, photo *string, title, messa
 }
 
 // Broadcast emit a new message without external actor information
-func (s *Spokesman) Broadcast(title, message string, entities supersense.Entities, url string, delay *time.Duration) {
+func (s *Spokesman) Broadcast(title *string, message string, entities supersense.Entities, url string, delay *time.Duration) {
 	go s.programBroadcast(nil, nil, nil, title, message, entities, url, delay)
 }
 
 // BroadcastWithActor emit a new message with custom actor information
-func (s *Spokesman) BroadcastWithActor(name string, username, photo *string, title, message string, entities supersense.Entities, url string, delay *time.Duration) {
+func (s *Spokesman) BroadcastWithActor(name string, username, photo *string, title *string, message string, entities supersense.Entities, url string, delay *time.Duration) {
 	go s.programBroadcast(&name, username, photo, title, message, entities, url, delay)
 }
