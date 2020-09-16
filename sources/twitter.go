@@ -97,24 +97,53 @@ func (s *Twitter) Run() error {
 			Tags:  []string{},
 		}
 
-		if tweet.ExtendedTweet != nil && tweet.ExtendedTweet.Entities != nil {
-			ents := tweet.ExtendedTweet
-			for _, url := range ents.Entities.Urls {
+		if tweet.Entities != nil {
+			ents := tweet.Entities
+			for _, url := range ents.Urls {
 				entities.Urls = append(entities.Urls, supersense.URLEntity{
 					DisplayURL: url.DisplayURL,
 					URL:        url.URL,
 				})
 			}
 
-			for _, media := range ents.Entities.Media {
+			for _, media := range ents.Media {
 				entities.Media = append(entities.Media, supersense.MediaEntity{
 					Type: media.Type,
 					URL:  media.MediaURLHttps,
 				})
 			}
 
-			for _, tag := range ents.Entities.Hashtags {
+			for _, tag := range ents.Hashtags {
 				entities.Tags = append(entities.Tags, tag.Text)
+			}
+		}
+
+		if tweet.ExtendedTweet != nil {
+			if tweet.ExtendedTweet.Entities != nil {
+				ents := tweet.ExtendedTweet
+				for _, url := range ents.Entities.Urls {
+					if !urlAlreadyExists(entities.Urls, url.URL) {
+						entities.Urls = append(entities.Urls, supersense.URLEntity{
+							DisplayURL: url.DisplayURL,
+							URL:        url.URL,
+						})
+					}
+				}
+
+				for _, media := range ents.Entities.Media {
+					if !mediaAlreadyExists(entities.Media, media.MediaURLHttps) {
+						entities.Media = append(entities.Media, supersense.MediaEntity{
+							Type: media.Type,
+							URL:  media.MediaURLHttps,
+						})
+					}
+				}
+
+				for _, tag := range ents.Entities.Hashtags {
+					if !tagAlreadyExists(entities.Tags, tag.Text) {
+						entities.Tags = append(entities.Tags, tag.Text)
+					}
+				}
 			}
 		}
 
