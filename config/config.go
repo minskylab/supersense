@@ -37,6 +37,11 @@ type Config struct {
 
 	RootCredentialUsername string `split_words:"true" default:"root"`
 	RootCredentialPassword string `split_words:"true" default:""`
+
+	ObserverBuffer  int    `split_words:"true" default:"20"`
+	ObserverTitle   string `split_words:"true" default:"Hello World"`
+	ObserverHashtag string `split_words:"true" default:"#supersense"`
+	ObserverBrand   string `split_words:"true" default:"SUPERSENSE"`
 }
 
 func load(appName string) (*Config, error) {
