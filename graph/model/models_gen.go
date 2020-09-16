@@ -18,7 +18,7 @@ type EntitiesDraft struct {
 }
 
 type EventDraft struct {
-	Title    string         `json:"title"`
+	Title    *string        `json:"title"`
 	Message  string         `json:"message"`
 	Actor    *PersonDraft   `json:"actor"`
 	Kind     *string        `json:"kind"`
@@ -39,6 +39,13 @@ type PersonDraft struct {
 	Name     string  `json:"name"`
 	Photo    *string `json:"photo"`
 	Username *string `json:"username"`
+}
+
+type SuperHeader struct {
+	Buffer  int    `json:"buffer"`
+	Title   string `json:"title"`
+	Hashtag string `json:"hashtag"`
+	Brand   string `json:"brand"`
 }
 
 type URLEntityDraft struct {
