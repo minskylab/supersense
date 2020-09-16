@@ -54,6 +54,7 @@ const ObserverBasicLayout: React.FC<ObserverBasicLayoutProps> = ({ bufferSize = 
         <Box>
             <Header brand={currentBrand} initialTitle={header?.header.title} hashtag={header?.header.hashtag} />
             <Box
+                maxWidth={"100vw"}
                 mt={16}
                 p={4}
                 display={"grid"}
@@ -67,7 +68,7 @@ const ObserverBasicLayout: React.FC<ObserverBasicLayoutProps> = ({ bufferSize = 
                     <EventCard key={event.id} event={event} />
                 ))}
             </Box>
-        </Box>
+        </>
     );
 };
 

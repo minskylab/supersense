@@ -195,9 +195,9 @@ func (s *Twitter) Run() error {
 			person.Username = &tweet.User.ScreenName
 		}
 
-		eventTweetKind := "Tweet"
+		eventTweetKind := "tweet"
 		if strings.HasPrefix(strings.TrimSpace(message), "RT") {
-			eventTweetKind = "Retweet"
+			eventTweetKind = "retweet"
 		}
 
 		s.events <- supersense.Event{
@@ -207,7 +207,7 @@ func (s *Twitter) Run() error {
 			Message:    message,
 			SourceID:   s.id,
 			SourceName: s.sourceName,
-			EventKind:  "tweet",
+			EventKind:  eventTweetKind,
 			Title:      fmt.Sprintf("%s of %s", eventTweetKind, tweet.User.Name),
 			Entities:   entities,
 			// ShareURL:   tweet.Source,
