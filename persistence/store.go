@@ -8,8 +8,10 @@ type Store interface {
 	AddEventToSharedState(event *supersense.Event) error
 
 	SaveCredential(username, password string) error
+	UsernameExists(username string) (bool, error)
 	ValidateCredential(username, password string) (bool, error)
 	UpdateCredential(username, password, newPassword string) error
+	ForceUpdateCredential(username, newPassword string) error
 
 	Close() error
 }
