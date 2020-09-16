@@ -15,56 +15,34 @@ export type Scalars = {
   Time: any;
 };
 
-export type AuthResponse = {
-  __typename?: 'AuthResponse';
-  jwtToken: Scalars['String'];
-  expirateAt: Scalars['Time'];
+export type Subscription = {
+  __typename?: 'Subscription';
+  eventStream: Event;
 };
 
 
-export type Query = {
-  __typename?: 'Query';
-  login: AuthResponse;
-  sharedBoard: Array<Event>;
+export type SubscriptionEventStreamArgs = {
+  filter?: Maybe<EventStreamFilter>;
 };
 
-
-export type QueryLoginArgs = {
-  username: Scalars['String'];
-  password: Scalars['String'];
-};
-
-
-export type QuerySharedBoardArgs = {
+export type SuperHeader = {
+  __typename?: 'SuperHeader';
   buffer: Scalars['Int'];
+  title: Scalars['String'];
+  hashtag: Scalars['String'];
+  brand: Scalars['String'];
 };
 
-export type Person = {
-  __typename?: 'Person';
+export type EventStreamFilter = {
+  sources: Array<Scalars['String']>;
+};
+
+export type PersonDraft = {
   name: Scalars['String'];
-  photo: Scalars['String'];
-  owner: Scalars['String'];
-  email?: Maybe<Scalars['String']>;
-  profileURL?: Maybe<Scalars['String']>;
+  photo?: Maybe<Scalars['String']>;
   username?: Maybe<Scalars['String']>;
 };
 
-export type UrlEntityDraft = {
-  url: Scalars['String'];
-  displayURL: Scalars['String'];
-};
-
-export type MediaEntity = {
-  __typename?: 'MediaEntity';
-  url: Scalars['String'];
-  type: Scalars['String'];
-};
-
-export type UrlEntity = {
-  __typename?: 'URLEntity';
-  url: Scalars['String'];
-  displayURL: Scalars['String'];
-};
 
 export type Event = {
   __typename?: 'Event';
@@ -81,12 +59,6 @@ export type Event = {
   eventKind: Scalars['String'];
 };
 
-export type EntitiesDraft = {
-  tags: Array<Scalars['String']>;
-  media: Array<MediaEntityDraft>;
-  urls: Array<UrlEntityDraft>;
-};
-
 export type Mutation = {
   __typename?: 'Mutation';
   emit: Scalars['String'];
@@ -94,18 +66,14 @@ export type Mutation = {
 
 
 export type MutationEmitArgs = {
+  token: Scalars['String'];
   draft: EventDraft;
 };
 
-export type PersonDraft = {
-  name: Scalars['String'];
-  photo?: Maybe<Scalars['String']>;
-  username?: Maybe<Scalars['String']>;
-};
-
-export type MediaEntityDraft = {
-  url: Scalars['String'];
-  type: Scalars['String'];
+export type AuthResponse = {
+  __typename?: 'AuthResponse';
+  jwtToken: Scalars['String'];
+  expirateAt: Scalars['Time'];
 };
 
 export type Entities = {
@@ -115,28 +83,74 @@ export type Entities = {
   urls: Array<UrlEntity>;
 };
 
-export type Subscription = {
-  __typename?: 'Subscription';
-  eventStream: Event;
-};
-
-
-export type SubscriptionEventStreamArgs = {
-  filter?: Maybe<EventStreamFilter>;
-};
-
-export type EventStreamFilter = {
-  sources: Array<Scalars['String']>;
+export type Person = {
+  __typename?: 'Person';
+  name: Scalars['String'];
+  photo: Scalars['String'];
+  owner: Scalars['String'];
+  email?: Maybe<Scalars['String']>;
+  profileURL?: Maybe<Scalars['String']>;
+  username?: Maybe<Scalars['String']>;
 };
 
 export type EventDraft = {
-  title: Scalars['String'];
+  title?: Maybe<Scalars['String']>;
   message: Scalars['String'];
   actor?: Maybe<PersonDraft>;
   kind?: Maybe<Scalars['String']>;
   shareURL?: Maybe<Scalars['String']>;
   entities?: Maybe<EntitiesDraft>;
 };
+
+export type MediaEntity = {
+  __typename?: 'MediaEntity';
+  url: Scalars['String'];
+  type: Scalars['String'];
+};
+
+export type Query = {
+  __typename?: 'Query';
+  sharedBoard: Array<Event>;
+  header: SuperHeader;
+};
+
+
+export type QuerySharedBoardArgs = {
+  buffer: Scalars['Int'];
+};
+
+export type UrlEntity = {
+  __typename?: 'URLEntity';
+  url: Scalars['String'];
+  displayURL: Scalars['String'];
+};
+
+export type MediaEntityDraft = {
+  url: Scalars['String'];
+  type: Scalars['String'];
+};
+
+export type UrlEntityDraft = {
+  url: Scalars['String'];
+  displayURL: Scalars['String'];
+};
+
+export type EntitiesDraft = {
+  tags: Array<Scalars['String']>;
+  media: Array<MediaEntityDraft>;
+  urls: Array<UrlEntityDraft>;
+};
+
+export type HeaderQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type HeaderQuery = (
+  { __typename?: 'Query' }
+  & { header: (
+    { __typename?: 'SuperHeader' }
+    & Pick<SuperHeader, 'buffer' | 'title' | 'hashtag' | 'brand'>
+  ) }
+);
 
 export type SharedBoardQueryVariables = Exact<{
   size: Scalars['Int'];
@@ -191,6 +205,47 @@ export type EventsStreamSubscription = (
 );
 
 
+export const HeaderDocument = gql`
+    query Header {
+  header {
+    buffer
+    title
+    hashtag
+    brand
+  }
+}
+    `;
+export type HeaderComponentProps = Omit<ApolloReactComponents.QueryComponentOptions<HeaderQuery, HeaderQueryVariables>, 'query'>;
+
+    export const HeaderComponent = (props: HeaderComponentProps) => (
+      <ApolloReactComponents.Query<HeaderQuery, HeaderQueryVariables> query={HeaderDocument} {...props} />
+    );
+    
+
+/**
+ * __useHeaderQuery__
+ *
+ * To run a query within a React component, call `useHeaderQuery` and pass it any options that fit your needs.
+ * When your component renders, `useHeaderQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useHeaderQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useHeaderQuery(baseOptions?: Apollo.QueryHookOptions<HeaderQuery, HeaderQueryVariables>) {
+        return Apollo.useQuery<HeaderQuery, HeaderQueryVariables>(HeaderDocument, baseOptions);
+      }
+export function useHeaderLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<HeaderQuery, HeaderQueryVariables>) {
+          return Apollo.useLazyQuery<HeaderQuery, HeaderQueryVariables>(HeaderDocument, baseOptions);
+        }
+export type HeaderQueryHookResult = ReturnType<typeof useHeaderQuery>;
+export type HeaderLazyQueryHookResult = ReturnType<typeof useHeaderLazyQuery>;
+export type HeaderQueryResult = Apollo.QueryResult<HeaderQuery, HeaderQueryVariables>;
 export const SharedBoardDocument = gql`
     query SharedBoard($size: Int!) {
   sharedBoard(buffer: $size) {

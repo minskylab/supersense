@@ -1,3 +1,12 @@
+query Header {
+    header {
+        buffer
+        title
+        hashtag
+        brand
+    }
+}
+
 query SharedBoard($size: Int!) {
     sharedBoard(buffer: $size) {
         id

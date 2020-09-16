@@ -3,21 +3,26 @@ import { Flex, Box, Text, useColorMode, useColorModeValue } from "@chakra-ui/cor
 import { Settings, Moon, Sun } from "react-feather";
 
 interface HeaderProps {
-    brand?: Component | ReactElement | string;
+    brand?: ReactElement | string;
     initialTitle: string;
-    initialMessage: string;
+    hashtag: string;
     onSettings?: () => void;
 }
 
-const Header: FC<HeaderProps> = ({ initialTitle, initialMessage, onSettings, brand = "SUPERSENSE" }: HeaderProps) => {
+const Header: FC<HeaderProps> = ({ initialTitle, hashtag, onSettings, brand = "SUPERSENSE" }: HeaderProps) => {
     const { colorMode, toggleColorMode } = useColorMode();
 
-    const bgColor = useColorModeValue("teal.200", "teal.800");
+    const bgColor = useColorModeValue("teal.200", "teal.700");
 
     const changeColorModeIcon = useColorModeValue(
         <Moon onClick={toggleColorMode} />,
         <Sun onClick={toggleColorMode} />
     );
+
+    const detempletation = (val: string, def: string) => {
+        return val.startsWith("{{") ? def : val;
+    };
+
     return (
         <Flex
             p={4}
@@ -35,11 +40,11 @@ const Header: FC<HeaderProps> = ({ initialTitle, initialMessage, onSettings, bra
                 <Text display={["none", "block"]}>{initialTitle}</Text>
             </Flex>
             <Flex flex={1} justifyContent={"flex-end"}>
-                <Text fontFamily={"body"}>{initialMessage}</Text>
+                <Text fontFamily={"body"}>{hashtag}</Text>
             </Flex>
-            <Flex ml={4}>
+            {/* <Flex ml={4}>
                 <Settings onClick={onSettings} />
-            </Flex>
+            </Flex> */}
             <Flex ml={4} _hover={{ cursor: "pointer" }}>
                 {changeColorModeIcon}
             </Flex>
