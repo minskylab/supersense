@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"strings"
+	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/minskylab/supersense"
@@ -58,12 +60,51 @@ func setupPersistence(conf *config.Config) (persistence.Store, error) {
 			if err != nil {
 				return nil, errors.WithStack(err)
 			}
+
 			log.WithField("filepath", conf.PersistenceBoltDBFilePath).Info("Persistence layer activated with boltdb")
 		}
 
 	}
 
 	return store, nil
+}
+
+func setupCredentials(conf config.Config, store persistence.Store) error {
+	username := conf.RootCredentialUsername
+	if len(username) < 4 {
+		return errors.New("invalid username, please choose other")
+	}
+
+	password := conf.RootCredentialPassword
+
+	if password == "" {
+		log.Info("Root password not detected")
+
+		charset := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+		source := rand.New(rand.NewSource(time.Now().Unix()))
+
+		b := make([]byte, 12)
+
+		for i := range b {
+			b[i] = charset[source.Intn(len(charset))]
+		}
+
+		password = string(b)
+		log.Info("New auto-generated password: " + password)
+	}
+
+	valid, err := store.ValidateCredential(username, password)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	if !valid {
+		if err := store.SaveCredential(username, password); err != nil {
+			return errors.WithStack(err)
+		}
+	}
+
+	return nil
 }
 
 func launchDefaultService(done chan struct{}) error {

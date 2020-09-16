@@ -34,6 +34,9 @@ type Config struct {
 	SpokesmanName     string `split_words:"true" default:"Spokesman"`
 	SpokesmanUsername string `split_words:"true" default:"spokesman"`
 	SpokesmanEmail    string `split_words:"true"`
+
+	RootCredentialUsername string `split_words:"true" default:"root"`
+	RootCredentialPassword string `split_words:"true" default:""`
 }
 
 func load(appName string) (*Config, error) {
