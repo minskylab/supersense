@@ -7,6 +7,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
+// Spokesman is a source useful to emit custom message to your event board
 type Spokesman struct {
 	id         string
 	name       string
@@ -16,6 +17,7 @@ type Spokesman struct {
 	sourceName string
 }
 
+// NewSpokesman creates and return a new bootstraped Spokesman struct
 func NewSpokesman(name, username, email string) (*Spokesman, error) {
 	source := &Spokesman{
 		id:         uuid.NewV4().String(),
@@ -33,19 +35,22 @@ func (s *Spokesman) Identify(nameOrID string) bool {
 	return s.sourceName == nameOrID || s.id == nameOrID
 }
 
+// Run starts the spokesman source
 func (s *Spokesman) Run() error {
 	return nil
 }
 
+// Dispose close all streams and flows with the source
 func (s *Spokesman) Dispose() {
 	close(s.channel)
 }
 
+// Pipeline is necessary to retreive the spokesman events chanel
 func (s *Spokesman) Pipeline() <-chan supersense.Event {
 	return s.channel
 }
 
-func (s *Spokesman) programBroadcast(name, username, photo *string, title, message string, entities supersense.Entities, url string, delay *time.Duration) {
+func (s *Spokesman) programBroadcast(name, username, photo, title *string, message string, entities supersense.Entities, url string, delay *time.Duration) {
 	if delay != nil {
 		time.Sleep(*delay)
 	}
@@ -65,9 +70,14 @@ func (s *Spokesman) programBroadcast(name, username, photo *string, title, messa
 		finalPhoto = *photo
 	}
 
+	t := ""
+	if title != nil {
+		t = *title
+	}
+
 	event := supersense.Event{
 		ID:        uuid.NewV4().String(),
-		Title:     title,
+		Title:     t,
 		Entities:  entities,
 		ShareURL:  url,
 		CreatedAt: time.Now(),
@@ -88,10 +98,12 @@ func (s *Spokesman) programBroadcast(name, username, photo *string, title, messa
 	s.channel <- event
 }
 
-func (s *Spokesman) Broadcast(title, message string, entities supersense.Entities, url string, delay *time.Duration) {
+// Broadcast emit a new message without external actor information
+func (s *Spokesman) Broadcast(title *string, message string, entities supersense.Entities, url string, delay *time.Duration) {
 	go s.programBroadcast(nil, nil, nil, title, message, entities, url, delay)
 }
 
-func (s *Spokesman) BroadcastWithActor(name string, username, photo *string, title, message string, entities supersense.Entities, url string, delay *time.Duration) {
+// BroadcastWithActor emit a new message with custom actor information
+func (s *Spokesman) BroadcastWithActor(name string, username, photo *string, title *string, message string, entities supersense.Entities, url string, delay *time.Duration) {
 	go s.programBroadcast(&name, username, photo, title, message, entities, url, delay)
 }

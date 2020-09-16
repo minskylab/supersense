@@ -6,5 +6,12 @@ import "github.com/minskylab/supersense"
 type Store interface {
 	CurrentSharedState(lasts int64) (*SharedState, error)
 	AddEventToSharedState(event *supersense.Event) error
+
+	SaveCredential(username, password string) error
+	UsernameExists(username string) (bool, error)
+	ValidateCredential(username, password string) (bool, error)
+	UpdateCredential(username, password, newPassword string) error
+	ForceUpdateCredential(username, newPassword string) error
+
 	Close() error
 }
