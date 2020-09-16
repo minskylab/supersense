@@ -1,6 +1,8 @@
 package config
 
 import (
+	"strings"
+
 	"github.com/kelseyhightower/envconfig"
 	"github.com/pkg/errors"
 )
@@ -40,7 +42,7 @@ type Config struct {
 
 	ObserverBuffer  int    `split_words:"true" default:"20"`
 	ObserverTitle   string `split_words:"true" default:"Hello World"`
-	ObserverHashtag string `split_words:"true" default:"#supersense"`
+	ObserverHashtag string `split_words:"true" default:"#opensource"`
 	ObserverBrand   string `split_words:"true" default:"SUPERSENSE"`
 }
 
@@ -49,6 +51,11 @@ func load(appName string) (*Config, error) {
 	if err := envconfig.Process(appName, conf); err != nil {
 		return nil, errors.WithStack(err)
 	}
+
+	conf.ObserverBrand = strings.ReplaceAll(conf.ObserverBrand, "\"", "")
+	conf.ObserverTitle = strings.ReplaceAll(conf.ObserverTitle, "\"", "")
+	conf.ObserverHashtag = strings.ReplaceAll(conf.ObserverHashtag, "\"", "")
+
 	return conf, nil
 }
 
