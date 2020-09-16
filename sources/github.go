@@ -92,16 +92,30 @@ func (g *Github) pullEvents(owner, repo string, previousETag string, token *stri
 	return events, resp, nil
 }
 
+func (g *Github) alreadyDispatched(eventID string) bool {
+	// g.mu.Lock()
+	// defer g.mu.Unlock()
+
+	for _, e := range g.eventsDispatched { // If the event has been dispatched
+		if eventID == e {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (g *Github) fetchRepo(repo string) {
 	parts := strings.Split(repo, "/")
 
 	g.mu.Lock()
-
 	events, resp, err := g.pullEvents(parts[0], parts[1], g.eTags[repo], g.token)
 	if err != nil {
 		log.Errorf("%+v", err)
 		return
 	}
+
+	// log.WithField("events", events).Debug("fetching " + repo)
 
 	if resp == nil {
 		log.Error("Invalid response from GitHub Events API.")
@@ -138,17 +152,13 @@ func (g *Github) fetchRepo(repo string) {
 			continue
 		}
 
-		if time.Now().Sub(*event.CreatedAt) > 6*time.Second {
+		if time.Now().Sub(*event.CreatedAt) > 100*time.Second {
 			continue // No old events
 		}
 
-		for _, e := range g.eventsDispatched { // If the event has been dispatched
-			if *event.ID == e {
-				continue
-			}
+		if a := g.alreadyDispatched(*event.ID); a {
+			continue
 		}
-
-		// log.Info("Github event type: " + *event.Type)
 
 		superEvent := supersense.Event{}
 		superEvent.ID = *event.ID
@@ -352,7 +362,7 @@ func (g *Github) fetchRepo(repo string) {
 			superEvent.EventKind = strings.Trim("issue-"+action, "- ")
 			superEvent.ShareURL = shareURL
 		default:
-			log.Debug(fmt.Sprintf("%T payload type not accepted in this stage of supersense", payload))
+			// log.Debug(fmt.Sprintf("%T payload type not accepted in this stage of supersense", payload))
 			continue
 		}
 
@@ -367,7 +377,7 @@ func (g *Github) fetchRepo(repo string) {
 func (g *Github) loopFetchRepo(repo string) {
 	for {
 		g.fetchRepo(repo)
-		time.Sleep(1 * time.Second)
+		time.Sleep(1000 * time.Millisecond)
 	}
 }
 
