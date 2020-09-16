@@ -11,6 +11,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/gorilla/websocket"
 	"github.com/minskylab/supersense"
+	"github.com/minskylab/supersense/config"
 	"github.com/minskylab/supersense/graph"
 	"github.com/minskylab/supersense/graph/generated"
 	"github.com/minskylab/supersense/persistence"
@@ -21,12 +22,12 @@ import (
 const defaultPort = 8080
 
 // LaunchServer launch the graphQL server
-func LaunchServer(mux *supersense.Mux, port int64, withGraphQLPlayground bool, spokesman *sources.Spokesman, store persistence.Store) error {
-	if port <= 0 {
-		port = defaultPort
+func LaunchServer(mux *supersense.Mux, conf *config.Config, withGraphQLPlayground bool, spokesman *sources.Spokesman, store persistence.Store) error {
+	if conf.Port <= 0 {
+		conf.Port = defaultPort
 	}
 
-	resolver := graph.NewResolver(mux, spokesman, store)
+	resolver := graph.NewResolver(mux, spokesman, store, conf)
 
 	srv := handler.New(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
 	srv.AddTransport(transport.POST{})
@@ -43,9 +44,12 @@ func LaunchServer(mux *supersense.Mux, port int64, withGraphQLPlayground bool, s
 	srv.Use(extension.Introspection{})
 
 	// Serving static from observer build
-	fs := http.FileServer(http.Dir("./observer_static"))
+	observerFilepath := "./observer_static"
+
+	fs := http.FileServer(http.Dir(observerFilepath))
 	http.Handle("/", fs)
-	log.Infof("Open to http://localhost:%d/ for the observer", port)
+
+	log.Infof("Open to http://localhost:%d/ for the observer", conf.Port)
 
 	// Setting up graphql endpoint
 	http.Handle("/graphql", srv)
@@ -53,8 +57,8 @@ func LaunchServer(mux *supersense.Mux, port int64, withGraphQLPlayground bool, s
 	// If GraphQL Playground is enabled
 	if withGraphQLPlayground {
 		http.Handle("/playground", playground.Handler("GraphQL playground", "/graphql"))
-		log.Infof("Connect to http://localhost:%d/playground for GraphQL playground", port)
+		log.Infof("Connect to http://localhost:%d/playground for GraphQL playground", conf.Port)
 	}
 
-	return http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
+	return http.ListenAndServe(fmt.Sprintf(":%d", conf.Port), nil)
 }
