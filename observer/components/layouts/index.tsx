@@ -52,7 +52,13 @@ const ObserverBasicLayout: React.FC<ObserverBasicLayoutProps> = ({ bufferSize = 
 
     return (
         <Box>
-            <Header brand={currentBrand} initialTitle={header?.header.title} hashtag={header?.header.hashtag} />
+            <Header
+                brand={currentBrand}
+                initialTitle={header?.header.title}
+                hashtag={header?.header.hashtag}
+                lightColor={header?.header.lightColor}
+                darkColor={header?.header.darkColor}
+            />
             <Box
                 mt={16}
                 p={4}

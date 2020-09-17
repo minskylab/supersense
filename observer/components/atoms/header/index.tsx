@@ -7,21 +7,26 @@ interface HeaderProps {
     initialTitle: string;
     hashtag: string;
     onSettings?: () => void;
+    lightColor?: string;
+    darkColor?: string;
 }
 
-const Header: FC<HeaderProps> = ({ initialTitle, hashtag, onSettings, brand = "SUPERSENSE" }: HeaderProps) => {
+const Header: FC<HeaderProps> = ({
+    initialTitle,
+    hashtag,
+    onSettings,
+    brand = "SUPERSENSE",
+    lightColor = "teal.200",
+    darkColor = "teal.700",
+}: HeaderProps) => {
     const { colorMode, toggleColorMode } = useColorMode();
 
-    const bgColor = useColorModeValue("teal.200", "teal.700");
+    const bgColor = useColorModeValue(lightColor, darkColor);
 
     const changeColorModeIcon = useColorModeValue(
         <Moon onClick={toggleColorMode} />,
         <Sun onClick={toggleColorMode} />
     );
-
-    const detempletation = (val: string, def: string) => {
-        return val.startsWith("{{") ? def : val;
-    };
 
     return (
         <Flex

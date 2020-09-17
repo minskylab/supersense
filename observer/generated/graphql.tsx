@@ -15,6 +15,12 @@ export type Scalars = {
   Time: any;
 };
 
+export type MediaEntity = {
+  __typename?: 'MediaEntity';
+  url: Scalars['String'];
+  type: Scalars['String'];
+};
+
 export type Subscription = {
   __typename?: 'Subscription';
   eventStream: Event;
@@ -25,16 +31,19 @@ export type SubscriptionEventStreamArgs = {
   filter?: Maybe<EventStreamFilter>;
 };
 
-export type SuperHeader = {
-  __typename?: 'SuperHeader';
-  buffer: Scalars['Int'];
-  title: Scalars['String'];
-  hashtag: Scalars['String'];
-  brand: Scalars['String'];
-};
-
 export type EventStreamFilter = {
   sources: Array<Scalars['String']>;
+};
+
+export type Query = {
+  __typename?: 'Query';
+  sharedBoard: Array<Event>;
+  header: SuperHeader;
+};
+
+
+export type QuerySharedBoardArgs = {
+  buffer: Scalars['Int'];
 };
 
 export type PersonDraft = {
@@ -43,6 +52,39 @@ export type PersonDraft = {
   username?: Maybe<Scalars['String']>;
 };
 
+export type Entities = {
+  __typename?: 'Entities';
+  tags: Array<Scalars['String']>;
+  media: Array<MediaEntity>;
+  urls: Array<UrlEntity>;
+};
+
+export type SuperHeader = {
+  __typename?: 'SuperHeader';
+  buffer: Scalars['Int'];
+  title: Scalars['String'];
+  hashtag: Scalars['String'];
+  brand: Scalars['String'];
+  lightColor: Scalars['String'];
+  darkColor: Scalars['String'];
+};
+
+export type AuthResponse = {
+  __typename?: 'AuthResponse';
+  jwtToken: Scalars['String'];
+  expirateAt: Scalars['Time'];
+};
+
+export type MediaEntityDraft = {
+  url: Scalars['String'];
+  type: Scalars['String'];
+};
+
+export type EntitiesDraft = {
+  tags: Array<Scalars['String']>;
+  media: Array<MediaEntityDraft>;
+  urls: Array<UrlEntityDraft>;
+};
 
 export type Event = {
   __typename?: 'Event';
@@ -59,6 +101,12 @@ export type Event = {
   eventKind: Scalars['String'];
 };
 
+export type UrlEntity = {
+  __typename?: 'URLEntity';
+  url: Scalars['String'];
+  displayURL: Scalars['String'];
+};
+
 export type Mutation = {
   __typename?: 'Mutation';
   emit: Scalars['String'];
@@ -68,19 +116,6 @@ export type Mutation = {
 export type MutationEmitArgs = {
   token: Scalars['String'];
   draft: EventDraft;
-};
-
-export type AuthResponse = {
-  __typename?: 'AuthResponse';
-  jwtToken: Scalars['String'];
-  expirateAt: Scalars['Time'];
-};
-
-export type Entities = {
-  __typename?: 'Entities';
-  tags: Array<Scalars['String']>;
-  media: Array<MediaEntity>;
-  urls: Array<UrlEntity>;
 };
 
 export type Person = {
@@ -102,44 +137,11 @@ export type EventDraft = {
   entities?: Maybe<EntitiesDraft>;
 };
 
-export type MediaEntity = {
-  __typename?: 'MediaEntity';
-  url: Scalars['String'];
-  type: Scalars['String'];
-};
-
-export type Query = {
-  __typename?: 'Query';
-  sharedBoard: Array<Event>;
-  header: SuperHeader;
-};
-
-
-export type QuerySharedBoardArgs = {
-  buffer: Scalars['Int'];
-};
-
-export type UrlEntity = {
-  __typename?: 'URLEntity';
-  url: Scalars['String'];
-  displayURL: Scalars['String'];
-};
-
-export type MediaEntityDraft = {
-  url: Scalars['String'];
-  type: Scalars['String'];
-};
-
 export type UrlEntityDraft = {
   url: Scalars['String'];
   displayURL: Scalars['String'];
 };
 
-export type EntitiesDraft = {
-  tags: Array<Scalars['String']>;
-  media: Array<MediaEntityDraft>;
-  urls: Array<UrlEntityDraft>;
-};
 
 export type HeaderQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -148,7 +150,7 @@ export type HeaderQuery = (
   { __typename?: 'Query' }
   & { header: (
     { __typename?: 'SuperHeader' }
-    & Pick<SuperHeader, 'buffer' | 'title' | 'hashtag' | 'brand'>
+    & Pick<SuperHeader, 'buffer' | 'title' | 'hashtag' | 'brand' | 'lightColor' | 'darkColor'>
   ) }
 );
 
@@ -212,6 +214,8 @@ export const HeaderDocument = gql`
     title
     hashtag
     brand
+    lightColor
+    darkColor
   }
 }
     `;

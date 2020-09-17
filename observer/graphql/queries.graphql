@@ -4,6 +4,8 @@ query Header {
         title
         hashtag
         brand
+        lightColor
+        darkColor
     }
 }
 
