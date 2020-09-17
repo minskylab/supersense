@@ -21,6 +21,8 @@ type SuperHeader {
     title: String!
     hashtag: String!
     brand: String!
+    lightColor: String!
+    darkColor: String!
 }
 
 input EventStreamFilter {

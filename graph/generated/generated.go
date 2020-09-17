@@ -100,10 +100,12 @@ type ComplexityRoot struct {
 	}
 
 	SuperHeader struct {
-		Brand   func(childComplexity int) int
-		Buffer  func(childComplexity int) int
-		Hashtag func(childComplexity int) int
-		Title   func(childComplexity int) int
+		Brand      func(childComplexity int) int
+		Buffer     func(childComplexity int) int
+		DarkColor  func(childComplexity int) int
+		Hashtag    func(childComplexity int) int
+		LightColor func(childComplexity int) int
+		Title      func(childComplexity int) int
 	}
 
 	URLEntity struct {
@@ -363,12 +365,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.SuperHeader.Buffer(childComplexity), true
 
+	case "SuperHeader.darkColor":
+		if e.complexity.SuperHeader.DarkColor == nil {
+			break
+		}
+
+		return e.complexity.SuperHeader.DarkColor(childComplexity), true
+
 	case "SuperHeader.hashtag":
 		if e.complexity.SuperHeader.Hashtag == nil {
 			break
 		}
 
 		return e.complexity.SuperHeader.Hashtag(childComplexity), true
+
+	case "SuperHeader.lightColor":
+		if e.complexity.SuperHeader.LightColor == nil {
+			break
+		}
+
+		return e.complexity.SuperHeader.LightColor(childComplexity), true
 
 	case "SuperHeader.title":
 		if e.complexity.SuperHeader.Title == nil {
@@ -495,6 +511,8 @@ type SuperHeader {
     title: String!
     hashtag: String!
     brand: String!
+    lightColor: String!
+    darkColor: String!
 }
 
 input EventStreamFilter {
@@ -1851,6 +1869,74 @@ func (ec *executionContext) _SuperHeader_brand(ctx context.Context, field graphq
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Brand, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _SuperHeader_lightColor(ctx context.Context, field graphql.CollectedField, obj *model.SuperHeader) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "SuperHeader",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LightColor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _SuperHeader_darkColor(ctx context.Context, field graphql.CollectedField, obj *model.SuperHeader) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "SuperHeader",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DarkColor, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3530,6 +3616,16 @@ func (ec *executionContext) _SuperHeader(ctx context.Context, sel ast.SelectionS
 			}
 		case "brand":
 			out.Values[i] = ec._SuperHeader_brand(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "lightColor":
+			out.Values[i] = ec._SuperHeader_lightColor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "darkColor":
+			out.Values[i] = ec._SuperHeader_darkColor(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}

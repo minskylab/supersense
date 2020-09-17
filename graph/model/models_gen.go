@@ -42,10 +42,12 @@ type PersonDraft struct {
 }
 
 type SuperHeader struct {
-	Buffer  int    `json:"buffer"`
-	Title   string `json:"title"`
-	Hashtag string `json:"hashtag"`
-	Brand   string `json:"brand"`
+	Buffer     int    `json:"buffer"`
+	Title      string `json:"title"`
+	Hashtag    string `json:"hashtag"`
+	Brand      string `json:"brand"`
+	LightColor string `json:"lightColor"`
+	DarkColor  string `json:"darkColor"`
 }
 
 type URLEntityDraft struct {

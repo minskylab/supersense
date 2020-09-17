@@ -5,7 +5,6 @@ package graph
 
 import (
 	"context"
-
 	"fmt"
 
 	"github.com/minskylab/supersense"
@@ -61,10 +60,12 @@ func (r *queryResolver) Header(ctx context.Context) (*model.SuperHeader, error) 
 	}
 
 	return &model.SuperHeader{
-		Title:   r.conf.ObserverTitle,
-		Hashtag: r.conf.ObserverHashtag,
-		Brand:   r.conf.ObserverBrand,
-		Buffer:  r.conf.ObserverBuffer,
+		Title:      r.conf.ObserverTitle,
+		Hashtag:    r.conf.ObserverHashtag,
+		Brand:      r.conf.ObserverBrand,
+		Buffer:     r.conf.ObserverBuffer,
+		DarkColor:  r.conf.ObserverColorDark,
+		LightColor: r.conf.ObserverColorLight,
 	}, nil
 }
 
