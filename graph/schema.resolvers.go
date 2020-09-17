@@ -13,7 +13,13 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (r *mutationResolver) Emit(ctx context.Context, draft model.EventDraft) (string, error) {
+func (r *mutationResolver) Emit(ctx context.Context, token string, draft model.EventDraft) (string, error) {
+	if r.spokesman == nil {
+		return "", errors.New("you cannot emit because Spokesman is note enabled")
+	}
+
+	// if token == {}
+
 	url := ""
 	if draft.ShareURL != nil {
 		url = *draft.ShareURL
@@ -35,10 +41,6 @@ func (r *mutationResolver) Emit(ctx context.Context, draft model.EventDraft) (st
 	return draft.Message, nil
 }
 
-func (r *queryResolver) Login(ctx context.Context, username string, password string) (*model.AuthResponse, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
 func (r *queryResolver) SharedBoard(ctx context.Context, buffer int) ([]*supersense.Event, error) {
 	if buffer < 1 || buffer > 100 { // hard coded limit
 		buffer = 100
@@ -50,6 +52,21 @@ func (r *queryResolver) SharedBoard(ctx context.Context, buffer int) ([]*superse
 	}
 
 	return currentState.Board, nil
+}
+
+func (r *queryResolver) Header(ctx context.Context) (*model.SuperHeader, error) {
+	if r.conf == nil {
+		return nil, errors.New("header settings not found")
+	}
+
+	return &model.SuperHeader{
+		Title:      r.conf.ObserverTitle,
+		Hashtag:    r.conf.ObserverHashtag,
+		Brand:      r.conf.ObserverBrand,
+		Buffer:     r.conf.ObserverBuffer,
+		DarkColor:  r.conf.ObserverColorDark,
+		LightColor: r.conf.ObserverColorLight,
+	}, nil
 }
 
 func (r *subscriptionResolver) EventStream(ctx context.Context, filter *model.EventStreamFilter) (<-chan *supersense.Event, error) {
@@ -76,3 +93,13 @@ func (r *Resolver) Subscription() generated.SubscriptionResolver { return &subsc
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *queryResolver) Login(ctx context.Context, username string, password string) (*model.AuthResponse, error) {
+	panic(fmt.Errorf("not implemented"))
+}

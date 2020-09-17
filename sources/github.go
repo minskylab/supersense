@@ -58,7 +58,6 @@ func NewGithub(token *string, repos []string) (*Github, error) {
 }
 
 // TODO: Pull Request: better titles
-
 func (g *Github) pullEvents(owner, repo string, previousETag string, token *string) ([]*Event, *http.Response, error) {
 	u := fmt.Sprintf("%s/repos/%v/%v/events", g.baseURL, owner, repo)
 	req, err := http.NewRequest(http.MethodGet, u, nil)
@@ -76,27 +75,50 @@ func (g *Github) pullEvents(owner, repo string, previousETag string, token *stri
 
 	resp, err := g.httpClient.Do(req)
 	if err != nil {
-		return nil, resp, errors.WithStack(err)
+		return nil, nil, errors.WithStack(err)
+	}
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNotModified {
+		log.Warnf("Github API response code: %d", resp.StatusCode)
 	}
 
 	var events []*Event
 
 	decErr := json.NewDecoder(resp.Body).Decode(&events)
 	if decErr != nil && decErr != io.EOF {
-		return nil, nil, errors.WithStack(err)
+		return nil, nil, errors.WithStack(decErr)
 	}
 
 	return events, resp, nil
+}
+
+func (g *Github) alreadyDispatched(eventID string) bool {
+	// g.mu.Lock()
+	// defer g.mu.Unlock()
+
+	for _, e := range g.eventsDispatched { // If the event has been dispatched
+		if eventID == e {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (g *Github) fetchRepo(repo string) {
 	parts := strings.Split(repo, "/")
 
 	g.mu.Lock()
-
 	events, resp, err := g.pullEvents(parts[0], parts[1], g.eTags[repo], g.token)
 	if err != nil {
 		log.Errorf("%+v", err)
+		return
+	}
+
+	// log.WithField("events", events).Debug("fetching " + repo)
+
+	if resp == nil {
+		log.Error("Invalid response from GitHub Events API.")
 		return
 	}
 
@@ -130,17 +152,13 @@ func (g *Github) fetchRepo(repo string) {
 			continue
 		}
 
-		if time.Now().Sub(*event.CreatedAt) > 6*time.Second {
+		if time.Now().Sub(*event.CreatedAt) > 100*time.Second {
 			continue // No old events
 		}
 
-		for _, e := range g.eventsDispatched { // If the event has been dispatched
-			if *event.ID == e {
-				continue
-			}
+		if a := g.alreadyDispatched(*event.ID); a {
+			continue
 		}
-
-		// log.Info("Github event type: " + *event.Type)
 
 		superEvent := supersense.Event{}
 		superEvent.ID = *event.ID
@@ -150,6 +168,8 @@ func (g *Github) fetchRepo(repo string) {
 		superEvent.SourceName = g.sourceName
 
 		// superEvent.ShareURL
+
+		repo = strings.Trim(repo, "/")
 
 		superEvent.Actor.Owner = g.sourceName
 		repoLink := "https://github.com/" + repo
@@ -186,7 +206,7 @@ func (g *Github) fetchRepo(repo string) {
 			pushEvent := payload.(*PushEvent)
 			for _, commit := range pushEvent.Commits {
 				if commit.Message != nil {
-					superEvent.Message = *commit.Message
+					superEvent.Message = repo + ":\n" + *commit.Message
 				}
 			}
 
@@ -211,7 +231,14 @@ func (g *Github) fetchRepo(repo string) {
 			}
 
 			forkeeRepo := ""
-			if forkEvent.Forkee.Owner != nil {
+
+			if forkEvent.Forkee != nil {
+				if forkEvent.Forkee != nil {
+					forkeeRepo = *forkEvent.Forkee.FullName
+				}
+			}
+
+			if forkeeRepo == "" && forkEvent.Forkee.Owner != nil {
 				if forkEvent.Forkee.Owner.Login != nil {
 					username := *forkEvent.Forkee.Owner.Login
 					forkeeRepo += username
@@ -219,12 +246,13 @@ func (g *Github) fetchRepo(repo string) {
 				}
 			}
 
-			if forkEvent.Forkee.Name != nil {
+			if forkeeRepo == "" && forkEvent.Forkee.Name != nil {
 				forkeeRepo += "/" + *forkEvent.Forkee.Name
 			}
 
-			superEvent.Message = forkeeRepo
+			superEvent.Message = repo + ":\n" + forkeeRepo
 			superEvent.EventKind = "fork"
+
 		case *PullRequestEvent:
 			pullRequestEvent := payload.(*PullRequestEvent)
 			pullRequest := pullRequestEvent.PullRequest
@@ -334,7 +362,7 @@ func (g *Github) fetchRepo(repo string) {
 			superEvent.EventKind = strings.Trim("issue-"+action, "- ")
 			superEvent.ShareURL = shareURL
 		default:
-			log.Debug(fmt.Sprintf("%T payload type not accepted in this stage of supersense", payload))
+			// log.Debug(fmt.Sprintf("%T payload type not accepted in this stage of supersense", payload))
 			continue
 		}
 
@@ -349,7 +377,7 @@ func (g *Github) fetchRepo(repo string) {
 func (g *Github) loopFetchRepo(repo string) {
 	for {
 		g.fetchRepo(repo)
-		time.Sleep(1 * time.Second)
+		time.Sleep(1000 * time.Millisecond)
 	}
 }
 

@@ -1,26 +1,25 @@
-import React, { useState, useEffect } from "react";
-import { Box, Flex, Text, useColorMode, Center } from "@chakra-ui/core";
-import { useEventsStreamSubscription, Event, useSharedBoardQuery } from "@app/generated/graphql";
+import React, { useState, useEffect, ReactElement } from "react";
+import { Box, Flex, Text, useColorMode, Center, Image } from "@chakra-ui/core";
+import { useEventsStreamSubscription, Event, useSharedBoardQuery, useHeaderQuery } from "@app/generated/graphql";
 import EventCard from "@app/components/atoms/eventCard";
 import Header from "../atoms/header";
+import SSLogo from "../atoms/logo";
 
 interface ObserverBasicLayoutProps {
-    initialTitle: string;
-    initialMessage: string;
+    initialTitle?: string;
+    hashtag?: string;
     bufferSize?: number;
+    brandData?: string;
 }
 
-const ObserverBasicLayout: React.FC<ObserverBasicLayoutProps> = ({
-    initialTitle,
-    initialMessage,
-    bufferSize = 3 * 5,
-}: ObserverBasicLayoutProps) => {
+const ObserverBasicLayout: React.FC<ObserverBasicLayoutProps> = ({ bufferSize = 25 }: ObserverBasicLayoutProps) => {
     const [events, setEvents] = useState<Event[]>([]);
     const { loading, error, data: sharedEvents } = useSharedBoardQuery({ variables: { size: bufferSize } });
     const sub = useEventsStreamSubscription();
 
+    const { data: header } = useHeaderQuery();
+
     useEffect(() => {
-        console.log(sub.data);
         if (sub.data?.eventStream) {
             const event = sub.data.eventStream as Event;
             if (events.length + 1 > bufferSize) {
@@ -36,17 +35,30 @@ const ObserverBasicLayout: React.FC<ObserverBasicLayoutProps> = ({
         }
     }, [sharedEvents]);
 
+    let currentBrand: string | ReactElement = header?.header.brand;
+
+    if (header?.header.brand.startsWith("http")) {
+        // if is link, it'll be used as a image
+        currentBrand = <Image src={header?.header.brand} maxHeight={6} />;
+    }
+
     if (loading) {
         return (
-            <Center>
-                <Text>Loading...</Text>
+            <Center height={"100vh"}>
+                <SSLogo width={80} height={80} />
             </Center>
         );
     }
 
     return (
-        <>
-            <Header initialTitle={initialTitle} initialMessage={initialMessage} />
+        <Box>
+            <Header
+                brand={currentBrand}
+                initialTitle={header?.header.title}
+                hashtag={header?.header.hashtag}
+                lightColor={header?.header.lightColor}
+                darkColor={header?.header.darkColor}
+            />
             <Box
                 maxWidth={"100vw"}
                 mt={16}
@@ -62,7 +74,7 @@ const ObserverBasicLayout: React.FC<ObserverBasicLayoutProps> = ({
                     <EventCard key={event.id} event={event} />
                 ))}
             </Box>
-        </>
+        </Box>
     );
 };
 

@@ -1,6 +1,8 @@
 package config
 
 import (
+	"strings"
+
 	"github.com/kelseyhightower/envconfig"
 	"github.com/pkg/errors"
 )
@@ -34,6 +36,16 @@ type Config struct {
 	SpokesmanName     string `split_words:"true" default:"Spokesman"`
 	SpokesmanUsername string `split_words:"true" default:"spokesman"`
 	SpokesmanEmail    string `split_words:"true"`
+
+	RootCredentialUsername string `split_words:"true" default:"root"`
+	RootCredentialPassword string `split_words:"true" default:""`
+
+	ObserverBuffer     int    `split_words:"true" default:"20"`
+	ObserverTitle      string `split_words:"true" default:"Hello World"`
+	ObserverHashtag    string `split_words:"true" default:"#opensource"`
+	ObserverBrand      string `split_words:"true" default:"SUPERSENSE"`
+	ObserverColorLight string `split_words:"true" default:"teal.200"`
+	ObserverColorDark  string `split_words:"true" default:"teal.700"`
 }
 
 func load(appName string) (*Config, error) {
@@ -41,6 +53,13 @@ func load(appName string) (*Config, error) {
 	if err := envconfig.Process(appName, conf); err != nil {
 		return nil, errors.WithStack(err)
 	}
+
+	conf.ObserverBrand = strings.ReplaceAll(conf.ObserverBrand, "\"", "")
+	conf.ObserverTitle = strings.ReplaceAll(conf.ObserverTitle, "\"", "")
+	conf.ObserverHashtag = strings.ReplaceAll(conf.ObserverHashtag, "\"", "")
+	conf.ObserverColorLight = strings.ReplaceAll(conf.ObserverColorLight, "\"", "")
+	conf.ObserverColorDark = strings.ReplaceAll(conf.ObserverColorDark, "\"", "")
+
 	return conf, nil
 }
 

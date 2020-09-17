@@ -78,7 +78,7 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		Emit func(childComplexity int, draft model.EventDraft) int
+		Emit func(childComplexity int, token string, draft model.EventDraft) int
 	}
 
 	Person struct {
@@ -91,12 +91,21 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Login       func(childComplexity int, username string, password string) int
+		Header      func(childComplexity int) int
 		SharedBoard func(childComplexity int, buffer int) int
 	}
 
 	Subscription struct {
 		EventStream func(childComplexity int, filter *model.EventStreamFilter) int
+	}
+
+	SuperHeader struct {
+		Brand      func(childComplexity int) int
+		Buffer     func(childComplexity int) int
+		DarkColor  func(childComplexity int) int
+		Hashtag    func(childComplexity int) int
+		LightColor func(childComplexity int) int
+		Title      func(childComplexity int) int
 	}
 
 	URLEntity struct {
@@ -106,11 +115,11 @@ type ComplexityRoot struct {
 }
 
 type MutationResolver interface {
-	Emit(ctx context.Context, draft model.EventDraft) (string, error)
+	Emit(ctx context.Context, token string, draft model.EventDraft) (string, error)
 }
 type QueryResolver interface {
-	Login(ctx context.Context, username string, password string) (*model.AuthResponse, error)
 	SharedBoard(ctx context.Context, buffer int) ([]*supersense.Event, error)
+	Header(ctx context.Context) (*model.SuperHeader, error)
 }
 type SubscriptionResolver interface {
 	EventStream(ctx context.Context, filter *model.EventStreamFilter) (<-chan *supersense.Event, error)
@@ -267,7 +276,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.Emit(childComplexity, args["draft"].(model.EventDraft)), true
+		return e.complexity.Mutation.Emit(childComplexity, args["token"].(string), args["draft"].(model.EventDraft)), true
 
 	case "Person.email":
 		if e.complexity.Person.Email == nil {
@@ -311,17 +320,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Person.Username(childComplexity), true
 
-	case "Query.login":
-		if e.complexity.Query.Login == nil {
+	case "Query.header":
+		if e.complexity.Query.Header == nil {
 			break
 		}
 
-		args, err := ec.field_Query_login_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.Login(childComplexity, args["username"].(string), args["password"].(string)), true
+		return e.complexity.Query.Header(childComplexity), true
 
 	case "Query.sharedBoard":
 		if e.complexity.Query.SharedBoard == nil {
@@ -346,6 +350,48 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Subscription.EventStream(childComplexity, args["filter"].(*model.EventStreamFilter)), true
+
+	case "SuperHeader.brand":
+		if e.complexity.SuperHeader.Brand == nil {
+			break
+		}
+
+		return e.complexity.SuperHeader.Brand(childComplexity), true
+
+	case "SuperHeader.buffer":
+		if e.complexity.SuperHeader.Buffer == nil {
+			break
+		}
+
+		return e.complexity.SuperHeader.Buffer(childComplexity), true
+
+	case "SuperHeader.darkColor":
+		if e.complexity.SuperHeader.DarkColor == nil {
+			break
+		}
+
+		return e.complexity.SuperHeader.DarkColor(childComplexity), true
+
+	case "SuperHeader.hashtag":
+		if e.complexity.SuperHeader.Hashtag == nil {
+			break
+		}
+
+		return e.complexity.SuperHeader.Hashtag(childComplexity), true
+
+	case "SuperHeader.lightColor":
+		if e.complexity.SuperHeader.LightColor == nil {
+			break
+		}
+
+		return e.complexity.SuperHeader.LightColor(childComplexity), true
+
+	case "SuperHeader.title":
+		if e.complexity.SuperHeader.Title == nil {
+			break
+		}
+
+		return e.complexity.SuperHeader.Title(childComplexity), true
 
 	case "URLEntity.displayURL":
 		if e.complexity.URLEntity.DisplayURL == nil {
@@ -447,16 +493,26 @@ directive @goModel(model: String, models: [String!]) on OBJECT | INPUT_OBJECT | 
 directive @goField(forceResolver: Boolean, name: String) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
 
 type Query {
-    login(username: String!, password: String!): AuthResponse!
+    # login(username: String!, password: String!): AuthResponse!
     sharedBoard(buffer: Int!): [Event!]!
+    header: SuperHeader!
 }
 
 type Mutation {
-    emit(draft: EventDraft!): String!
+    emit(token: String!, draft: EventDraft!): String!
 }
 
 type Subscription {
     eventStream(filter: EventStreamFilter): Event!
+}
+
+type SuperHeader {
+    buffer: Int!
+    title: String!
+    hashtag: String!
+    brand: String!
+    lightColor: String!
+    darkColor: String!
 }
 
 input EventStreamFilter {
@@ -469,7 +525,7 @@ type AuthResponse {
 }
 
 input EventDraft {
-    title: String!
+    title: String
     message: String!
     actor: PersonDraft
     kind: String
@@ -553,14 +609,22 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 func (ec *executionContext) field_Mutation_emit_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.EventDraft
-	if tmp, ok := rawArgs["draft"]; ok {
-		arg0, err = ec.unmarshalNEventDraft2githubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐEventDraft(ctx, tmp)
+	var arg0 string
+	if tmp, ok := rawArgs["token"]; ok {
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["draft"] = arg0
+	args["token"] = arg0
+	var arg1 model.EventDraft
+	if tmp, ok := rawArgs["draft"]; ok {
+		arg1, err = ec.unmarshalNEventDraft2githubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐEventDraft(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["draft"] = arg1
 	return args, nil
 }
 
@@ -575,28 +639,6 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		}
 	}
 	args["name"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_login_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["username"]; ok {
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["username"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["password"]; ok {
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["password"] = arg1
 	return args, nil
 }
 
@@ -1300,7 +1342,7 @@ func (ec *executionContext) _Mutation_emit(ctx context.Context, field graphql.Co
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().Emit(rctx, args["draft"].(model.EventDraft))
+		return ec.resolvers.Mutation().Emit(rctx, args["token"].(string), args["draft"].(model.EventDraft))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1512,47 +1554,6 @@ func (ec *executionContext) _Person_username(ctx context.Context, field graphql.
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Query_login(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:   "Query",
-		Field:    field,
-		Args:     nil,
-		IsMethod: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_login_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Login(rctx, args["username"].(string), args["password"].(string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.AuthResponse)
-	fc.Result = res
-	return ec.marshalNAuthResponse2ᚖgithubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐAuthResponse(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _Query_sharedBoard(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -1592,6 +1593,40 @@ func (ec *executionContext) _Query_sharedBoard(ctx context.Context, field graphq
 	res := resTmp.([]*supersense.Event)
 	fc.Result = res
 	return ec.marshalNEvent2ᚕᚖgithubᚗcomᚋminskylabᚋsupersenseᚐEventᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_header(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Header(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.SuperHeader)
+	fc.Result = res
+	return ec.marshalNSuperHeader2ᚖgithubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐSuperHeader(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1712,6 +1747,210 @@ func (ec *executionContext) _Subscription_eventStream(ctx context.Context, field
 			w.Write([]byte{'}'})
 		})
 	}
+}
+
+func (ec *executionContext) _SuperHeader_buffer(ctx context.Context, field graphql.CollectedField, obj *model.SuperHeader) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "SuperHeader",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Buffer, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _SuperHeader_title(ctx context.Context, field graphql.CollectedField, obj *model.SuperHeader) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "SuperHeader",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Title, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _SuperHeader_hashtag(ctx context.Context, field graphql.CollectedField, obj *model.SuperHeader) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "SuperHeader",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Hashtag, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _SuperHeader_brand(ctx context.Context, field graphql.CollectedField, obj *model.SuperHeader) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "SuperHeader",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Brand, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _SuperHeader_lightColor(ctx context.Context, field graphql.CollectedField, obj *model.SuperHeader) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "SuperHeader",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LightColor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _SuperHeader_darkColor(ctx context.Context, field graphql.CollectedField, obj *model.SuperHeader) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:   "SuperHeader",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DarkColor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _URLEntity_url(ctx context.Context, field graphql.CollectedField, obj *supersense.URLEntity) (ret graphql.Marshaler) {
@@ -2875,7 +3114,7 @@ func (ec *executionContext) unmarshalInputEventDraft(ctx context.Context, obj in
 		switch k {
 		case "title":
 			var err error
-			it.Title, err = ec.unmarshalNString2string(ctx, v)
+			it.Title, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -3286,20 +3525,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
-		case "login":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_login(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			})
 		case "sharedBoard":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -3309,6 +3534,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_sharedBoard(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "header":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_header(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -3347,6 +3586,58 @@ func (ec *executionContext) _Subscription(ctx context.Context, sel ast.Selection
 	default:
 		panic("unknown field " + strconv.Quote(fields[0].Name))
 	}
+}
+
+var superHeaderImplementors = []string{"SuperHeader"}
+
+func (ec *executionContext) _SuperHeader(ctx context.Context, sel ast.SelectionSet, obj *model.SuperHeader) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, superHeaderImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SuperHeader")
+		case "buffer":
+			out.Values[i] = ec._SuperHeader_buffer(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "title":
+			out.Values[i] = ec._SuperHeader_title(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "hashtag":
+			out.Values[i] = ec._SuperHeader_hashtag(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "brand":
+			out.Values[i] = ec._SuperHeader_brand(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "lightColor":
+			out.Values[i] = ec._SuperHeader_lightColor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "darkColor":
+			out.Values[i] = ec._SuperHeader_darkColor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
 }
 
 var uRLEntityImplementors = []string{"URLEntity"}
@@ -3626,20 +3917,6 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNAuthResponse2githubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐAuthResponse(ctx context.Context, sel ast.SelectionSet, v model.AuthResponse) graphql.Marshaler {
-	return ec._AuthResponse(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNAuthResponse2ᚖgithubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐAuthResponse(ctx context.Context, sel ast.SelectionSet, v *model.AuthResponse) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	return ec._AuthResponse(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	return graphql.UnmarshalBoolean(v)
 }
@@ -3845,6 +4122,20 @@ func (ec *executionContext) marshalNString2ᚕstringᚄ(ctx context.Context, sel
 	}
 
 	return ret
+}
+
+func (ec *executionContext) marshalNSuperHeader2githubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐSuperHeader(ctx context.Context, sel ast.SelectionSet, v model.SuperHeader) graphql.Marshaler {
+	return ec._SuperHeader(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNSuperHeader2ᚖgithubᚗcomᚋminskylabᚋsupersenseᚋgraphᚋmodelᚐSuperHeader(ctx context.Context, sel ast.SelectionSet, v *model.SuperHeader) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._SuperHeader(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNTime2timeᚐTime(ctx context.Context, v interface{}) (time.Time, error) {

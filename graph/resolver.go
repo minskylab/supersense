@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/minskylab/supersense"
+	"github.com/minskylab/supersense/config"
 	"github.com/minskylab/supersense/persistence"
 	"github.com/minskylab/supersense/sources"
 )
@@ -16,13 +17,14 @@ import (
 
 // Resolver ...
 type Resolver struct {
-	mu  *sync.Mutex
-	mux *supersense.Mux
+	mu        *sync.Mutex
+	mux       *supersense.Mux
 	spokesman *sources.Spokesman
-	store persistence.Store
+	store     persistence.Store
+	conf      *config.Config
 }
 
 // NewResolver returns a new resolver instance
-func NewResolver(mux *supersense.Mux, spokesman *sources.Spokesman, store persistence.Store) *Resolver {
-	return &Resolver{mux: mux, mu: &sync.Mutex{}, spokesman: spokesman, store: store}
+func NewResolver(mux *supersense.Mux, spokesman *sources.Spokesman, store persistence.Store, conf *config.Config) *Resolver {
+	return &Resolver{mux: mux, mu: &sync.Mutex{}, spokesman: spokesman, store: store, conf: conf}
 }
