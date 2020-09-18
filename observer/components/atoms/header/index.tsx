@@ -30,7 +30,7 @@ const Header: FC<HeaderProps> = ({
 
     return (
         <Flex
-            p={4}
+            p={3}
             bg={bgColor}
             position={"fixed"}
             top={0}
