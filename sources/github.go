@@ -105,23 +105,21 @@ func (g *Github) alreadyDispatched(eventID string) bool {
 	return false
 }
 
-func (g *GitHub) pullAndValidateEvents(parts []string) {
-	g.mu.Lock()
-	defer g.mu.Unlock()
+func (g *Github) pullAndValidateEvents(parts []string, repo string) ([]*Event, error) {
 
 	g.mu.Lock()
 	defer g.mu.Unlock()
 	events, resp, err := g.pullEvents(parts[0], parts[1], g.eTags[repo], g.token)
 	if err != nil {
 		log.Errorf("%+v", err)
-		return
+		return nil, err
 	}
 
 	// log.WithField("events", events).Debug("fetching " + repo)
 
 	if resp == nil {
 		log.Error("Invalid response from GitHub Events API.")
-		return
+		return nil, err
 	}
 
 	etag := resp.Header.Get("ETag")
@@ -146,12 +144,18 @@ func (g *GitHub) pullAndValidateEvents(parts []string) {
 	if g.firstTime {
 		g.firstTime = false
 	}
+
+	return events, nil
 }
+
 
 func (g *Github) fetchRepo(repo string) {
 	parts := strings.Split(repo, "/")
 
-	events := g.pullAndValidateEvents(parts)
+	events, err := g.pullAndValidateEvents(parts, repo)
+	if err != nil {
+		return // logged already in pullAndValidateEvents
+	}
 
 	for _, event := range events {
 		if event.CreatedAt == nil || event.ID == nil || event.Type == nil {
