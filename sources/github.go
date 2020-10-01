@@ -105,10 +105,12 @@ func (g *Github) alreadyDispatched(eventID string) bool {
 	return false
 }
 
-func (g *Github) fetchRepo(repo string) {
-	parts := strings.Split(repo, "/")
+func (g *GitHub) pullAndValidateEvents(parts []string) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
 
 	g.mu.Lock()
+	defer g.mu.Unlock()
 	events, resp, err := g.pullEvents(parts[0], parts[1], g.eTags[repo], g.token)
 	if err != nil {
 		log.Errorf("%+v", err)
@@ -144,8 +146,12 @@ func (g *Github) fetchRepo(repo string) {
 	if g.firstTime {
 		g.firstTime = false
 	}
+}
 
-	g.mu.Unlock()
+func (g *Github) fetchRepo(repo string) {
+	parts := strings.Split(repo, "/")
+
+	events := g.pullAndValidateEvents(parts)
 
 	for _, event := range events {
 		if event.CreatedAt == nil || event.ID == nil || event.Type == nil {
@@ -368,9 +374,9 @@ func (g *Github) fetchRepo(repo string) {
 
 		superEvent.EmittedAt = time.Now()
 		g.mu.Lock()
+		defer g.mu.Unlock()
 		g.eventsDispatched = append(g.eventsDispatched, *event.ID)
 		g.channel <- superEvent
-		g.mu.Unlock()
 	}
 }
 
