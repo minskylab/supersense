@@ -105,21 +105,21 @@ func (g *Github) alreadyDispatched(eventID string) bool {
 	return false
 }
 
-func (g *Github) fetchRepo(repo string) {
-	parts := strings.Split(repo, "/")
+func (g *Github) pullAndValidateEvents(parts []string, repo string) ([]*Event, error) {
 
 	g.mu.Lock()
+	defer g.mu.Unlock()
 	events, resp, err := g.pullEvents(parts[0], parts[1], g.eTags[repo], g.token)
 	if err != nil {
 		log.Errorf("%+v", err)
-		return
+		return nil, err
 	}
 
 	// log.WithField("events", events).Debug("fetching " + repo)
 
 	if resp == nil {
 		log.Error("Invalid response from GitHub Events API.")
-		return
+		return nil, err
 	}
 
 	etag := resp.Header.Get("ETag")
@@ -145,7 +145,17 @@ func (g *Github) fetchRepo(repo string) {
 		g.firstTime = false
 	}
 
-	g.mu.Unlock()
+	return events, nil
+}
+
+
+func (g *Github) fetchRepo(repo string) {
+	parts := strings.Split(repo, "/")
+
+	events, err := g.pullAndValidateEvents(parts, repo)
+	if err != nil {
+		return // logged already in pullAndValidateEvents
+	}
 
 	for _, event := range events {
 		if event.CreatedAt == nil || event.ID == nil || event.Type == nil {
@@ -368,9 +378,9 @@ func (g *Github) fetchRepo(repo string) {
 
 		superEvent.EmittedAt = time.Now()
 		g.mu.Lock()
+		defer g.mu.Unlock()
 		g.eventsDispatched = append(g.eventsDispatched, *event.ID)
 		g.channel <- superEvent
-		g.mu.Unlock()
 	}
 }
 
