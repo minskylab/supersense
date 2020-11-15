@@ -5,7 +5,7 @@
 
 
 config:
-  secretRef: supersense-secret
+  secretRef: peru-wall-secret
 
 service:
   type: ClusterIP
@@ -17,13 +17,16 @@ ingress:
     kubernetes.io/ingress.class: traefik
     cert-manager.io/cluster-issuer: letsencrypt
   hosts:
-    - host: supersense-demo.dev.minsky.cc
+    - host: peru.dev.minsky.cc
       paths:
         - "/"
   tls:
-    - secretName: supersense-demo.dev.minsky.cc-cert
+    - secretName: peru.dev.minsky.cc-cert
       hosts:
-        - supersense-demo.dev.minsky.cc
+        - peru.dev.minsky.cc
+
+# create secret
+# $ kubectl create secret generic osd-socialwall-secret --from-env-file=.env
 
 # to install only runs:
 # $ helm install <your-realease-name> minsky/supersense -f values.yaml

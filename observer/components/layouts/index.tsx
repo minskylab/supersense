@@ -12,7 +12,7 @@ interface ObserverBasicLayoutProps {
     brandData?: string;
 }
 
-const ObserverBasicLayout: React.FC<ObserverBasicLayoutProps> = ({ bufferSize = 25 }: ObserverBasicLayoutProps) => {
+const ObserverBasicLayout: React.FC<ObserverBasicLayoutProps> = ({ bufferSize = 98 }: ObserverBasicLayoutProps) => {
     const [events, setEvents] = useState<Event[]>([]);
     const { loading, error, data: sharedEvents } = useSharedBoardQuery({ variables: { size: bufferSize } });
     const sub = useEventsStreamSubscription();
